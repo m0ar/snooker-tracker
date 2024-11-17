@@ -2,7 +2,7 @@ import { writable, type Writable } from 'svelte/store';
 
 type Player = 0 | 1;
 
-interface GameState {
+export interface GameState {
   currentPlayer: Player;
   scores: [number, number];
   onRed: boolean;
@@ -64,54 +64,74 @@ interface SnookerStore extends Writable<GameState> {
   tossForRespot: () => void;
   chooseRespotTurn: (goesFirst: boolean) => void;
   resetGame: () => void;
+  getState: () => GameState;
 }
+const validatePot = (state: GameState, color: ColorName): boolean => {
+  // Check if trying to pot wrong ball type
+  if (!state.onRed && color === 'red') return false;
+  if (state.onRed && color !== 'red') return false;
 
-const createSnookerStore = (): SnookerStore => {
-  const { subscribe, set, update } = writable<GameState>(createInitialState());
+  // Check end game sequence
+  if (state.redsRemaining === 0) {
+    const expectedColor = getColors().at(-state.colorsRemaining)![0];
+    if (color !== expectedColor) return false;
+  }
+
+  return true;
+};
+
+const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
+  if (state.colorsRemaining > 0) return {};
+
+  if (state.scores[0] === state.scores[1]) {
+    return {
+      colorsRemaining: 1,
+      isRespot: true,
+    };
+  }
+
+  return {
+    isOver: true,
+    winner: state.scores[0] > state.scores[1] ? 0 : 1,
+  };
+};
+
+const updateStateWithPot = (state: GameState, color: ColorName, points: number): GameState => {
+  const newState = { ...state };
+  const isEndPhase = state.redsRemaining === 0;
+
+  newState.scores[state.currentPlayer] += points;
+  newState.currentBreak += points;
+
+  if (color === 'red') {
+    newState.redsRemaining -= 1;
+    newState.onRed = false;
+  } else if (!isEndPhase) {
+    newState.onRed = true;
+  } else {
+    newState.colorsRemaining -= 1;
+    newState.onRed = false;
+    // If this was the last ball, this adds game end state
+    Object.assign(newState, maybeHandleGameEnd(newState));
+  }
+
+  return newState;
+};
+
+export const createSnookerStore = (initialStateOverride?: Partial<GameState>): SnookerStore => {
+  const initialState = { ...createInitialState(), ...initialStateOverride };
+  const { subscribe, set, update } = writable<GameState>(initialState);
+
+  let currentState: GameState = initialState;
+  subscribe((state) => (currentState = state));
 
   const actions = {
     handlePot: (color: ColorName, points: number) => {
       update((state) => {
-        const isEndPhase = state.redsRemaining === 0;
-        const newState = { ...state };
-
-        if (isEndPhase) {
-          console.log('endPhase', {
-            colorsRemaining: state.colorsRemaining,
-            colors: getColors()
-          })
-          const expectedColor = getColors().at(-state.colorsRemaining)![0];
-          if (color !== expectedColor) {
-            // Don't allow potting out of sequence
-            return state;
-          }
+        if (!validatePot(state, color)) {
+          return state;
         }
-
-        newState.scores[state.currentPlayer] += points;
-        newState.currentBreak += points;
-
-        if (color === 'red') {
-          newState.redsRemaining -= 1;
-          newState.onRed = false;
-        } else if (!isEndPhase) {
-          newState.onRed = newState.redsRemaining > 0;
-        } else {
-          newState.colorsRemaining -= 1;
-          newState.onRed = newState.redsRemaining > 0;
-
-          if (newState.colorsRemaining === 0) {
-            if (newState.scores[0] === newState.scores[1]) {
-              // Scores are tied - re-spot black
-              newState.colorsRemaining = 1;
-              newState.isRespot = true;
-            } else {
-              newState.isOver = true;
-              newState.winner = newState.scores[0] > newState.scores[1] ? 0 : 1;
-            }
-          }
-        }
-
-        return newState;
+        return updateStateWithPot(state, color, points);
       });
     },
 
@@ -161,19 +181,19 @@ const createSnookerStore = (): SnookerStore => {
     },
 
     tossForRespot: () => {
-      update(state => ({
+      update((state) => ({
         ...state,
-        respotChoice: Math.random() < 0.5 ? 0 : 1
+        respotChoice: Math.random() < 0.5 ? 0 : 1,
       }));
     },
 
     chooseRespotTurn: (goesFirst: boolean) => {
-      update(state => {
+      update((state) => {
         if (state.respotChoice === undefined) return state;
         return {
           ...state,
           currentPlayer: goesFirst ? state.respotChoice : togglePlayer(state.respotChoice),
-          respotChoice: undefined
+          respotChoice: undefined,
         };
       });
     },
@@ -181,6 +201,9 @@ const createSnookerStore = (): SnookerStore => {
     resetGame: () => {
       set(createInitialState());
     },
+
+    // Test helper
+    getState: () => currentState,
   };
 
   return {

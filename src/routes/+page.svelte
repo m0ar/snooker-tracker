@@ -39,40 +39,40 @@
       </button>
     </div>
   {:else}
-  <div class="mb-4 text-center">
-    <div>Reds Remaining: {$snookerStore.redsRemaining}</div>
+    <div class="mb-4 text-center">
+      <div>Reds Remaining: {$snookerStore.redsRemaining}</div>
 
-    {#if $snookerStore.isRespot && $snookerStore.respotChoice === undefined}
-      <div class="mt-2 text-sm text-gray-600">
-        {#if $snookerStore.respotChoice === undefined}
-          <button
-            class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
-            onclick={() => snookerStore.tossForRespot()}
-          >
-            Toss coin for re-spot
-          </button>
-        {:else}
-          <div>
-            Player {$snookerStore.respotChoice + 1} to choose who goes first
-            <div class="mt-2 grid grid-cols-2 gap-2">
-              <button
-                class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                onclick={() => snookerStore.chooseRespotTurn(true)}
-              >
-                Go First
-              </button>
-              <button
-                class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                onclick={() => snookerStore.chooseRespotTurn(false)}
-              >
-                Go Second
-              </button>
+      {#if $snookerStore.isRespot && $snookerStore.respotChoice === undefined}
+        <div class="mt-2 text-sm text-gray-600">
+          {#if $snookerStore.respotChoice === undefined}
+            <button
+              class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
+              onclick={() => snookerStore.tossForRespot()}
+            >
+              Toss coin for re-spot
+            </button>
+          {:else}
+            <div>
+              Player {$snookerStore.respotChoice + 1} to choose who goes first
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                  onclick={() => snookerStore.chooseRespotTurn(true)}
+                >
+                  Go First
+                </button>
+                <button
+                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                  onclick={() => snookerStore.chooseRespotTurn(false)}
+                >
+                  Go Second
+                </button>
+              </div>
             </div>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
 
     <div class="space-y-4">
       <!-- Ball buttons -->
