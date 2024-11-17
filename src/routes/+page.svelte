@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { snookerStore, colors, getColors, FOUL_POINTS } from '$lib/snooker-store';
+  import { snookerStore, colors, getColors } from '$lib/snooker-store';
+  import FoulDialogue from './FoulDialogue.svelte';
 
-  let ballsOn = $derived(getColors().slice(-$snookerStore.colorsRemaining+1));
-  let selectedPoints: typeof FOUL_POINTS[number] | null = null;
-  let lostBall = false;
+  let colorsOn = $derived(getColors().slice(-$snookerStore.colorsRemaining));
 </script>
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
@@ -26,105 +25,97 @@
     </div>
   </div>
 
+  {#if $snookerStore.isOver}
+    <div class="mb-6 text-center">
+      <div class="text-2xl font-bold text-blue-600">Game Over!</div>
+      <div class="mt-2 text-xl">
+        Player {$snookerStore.winner! + 1} wins!
+      </div>
+      <button
+        class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        onclick={() => snookerStore.resetGame()}
+      >
+        New Game
+      </button>
+    </div>
+  {:else}
   <div class="mb-4 text-center">
     <div>Reds Remaining: {$snookerStore.redsRemaining}</div>
-  </div>
 
-  <div class="space-y-4">
-    {#if $snookerStore.onRed}
-      <div class="grid grid-cols-3 gap-2">
-        <button
-          class="rounded p-2 text-white {colors.red.bg}"
-          onclick={() => snookerStore.handlePot('red', 1)}
-          disabled={$snookerStore.redsRemaining === 0}
-        >
-          Red
-        </button>
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.handleMiss()}
-        >
-          Miss
-        </button>
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.showFoulSelection()}
-        >
-          Foul
-        </button>
-      </div>
-    {:else}
-      <div class="grid grid-cols-3 gap-2">
-        {#each ballsOn as [color, { points, bg }]}
+    {#if $snookerStore.isRespot && $snookerStore.respotChoice === undefined}
+      <div class="mt-2 text-sm text-gray-600">
+        {#if $snookerStore.respotChoice === undefined}
           <button
-            class="rounded p-2 text-white {bg}"
-            onclick={() => snookerStore.handlePot(color, points)}
+            class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
+            onclick={() => snookerStore.tossForRespot()}
           >
-            {color} ({points})
+            Toss coin for re-spot
           </button>
-        {/each}
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.handleMiss()}
-        >
-          Miss
-        </button>
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.showFoulSelection()}
-        >
-          Foul
-        </button>
+        {:else}
+          <div>
+            Player {$snookerStore.respotChoice + 1} to choose who goes first
+            <div class="mt-2 grid grid-cols-2 gap-2">
+              <button
+                class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                onclick={() => snookerStore.chooseRespotTurn(true)}
+              >
+                Go First
+              </button>
+              <button
+                class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                onclick={() => snookerStore.chooseRespotTurn(false)}
+              >
+                Go Second
+              </button>
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
-</div>
 
-{#if $snookerStore.showFoulDialog}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-4 rounded-lg shadow-lg">
-      <h2 class="text-lg font-bold mb-4">Select Foul Points</h2>
-
-      <div class="grid grid-cols-2 gap-2 mb-4">
-        {#each FOUL_POINTS as points}
+    <div class="space-y-4">
+      <!-- Ball buttons -->
+      <div class="grid grid-cols-3 gap-2">
+        {#if $snookerStore.onRed}
           <button
-            class="p-2 rounded text-white"
-            class:bg-red-500={selectedPoints !== points}
-            class:bg-red-700={selectedPoints === points}
-            onclick={() => selectedPoints = points}
+            class="rounded p-2 text-white {colors.red.bg}"
+            onclick={() => snookerStore.handlePot('red', 1)}
+            disabled={$snookerStore.redsRemaining === 0}
           >
-            {points} points
+            Red
           </button>
-        {/each}
+        {:else}
+          {#each colorsOn as [color, { points, bg }]}
+            <button
+              class="rounded p-2 text-white {bg}"
+              onclick={() => snookerStore.handlePot(color, points)}
+            >
+              {color} ({points})
+            </button>
+          {/each}
+        {/if}
       </div>
 
-      {#if $snookerStore.onRed || $snookerStore.redsRemaining === 0}
-      <label class="flex items-center gap-2 mb-4">
-        <input
-          type="checkbox"
-          class="w-4 h-4"
-          bind:checked={lostBall}
-        >
-        <span>{$snookerStore.onRed ? 'Red' : 'Color'} was lost</span>
-      </label>
-      {/if}
-
-      <div class="flex gap-2">
+      <!-- Miss/Foul buttons -->
+      <div class="grid grid-cols-2 gap-2">
         <button
-          class="p-2 bg-red-500 hover:bg-red-600 text-white rounded flex-1"
-          onclick={() => {
-            if (selectedPoints) snookerStore.handleFoul(selectedPoints, lostBall);
-          }}
+          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          onclick={() => snookerStore.handleMiss()}
         >
-          Confirm
+          Miss
         </button>
         <button
-          class="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded flex-1"
-          onclick={() => snookerStore.cancelFoul()}
+          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          onclick={() => snookerStore.showFoulSelection()}
         >
-          Cancel
+          Foul
         </button>
       </div>
     </div>
-  </div>
+  {/if}
+</div>
+
+{#if $snookerStore.showFoulDialog}
+  <FoulDialogue />
 {/if}
