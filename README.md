@@ -38,4 +38,6 @@ Run the test suite:
 
 ## Deployment ☁
 
-TODO
+Automatically deploys to Cloudflare Pages, sending `main` to [snooker.hubinette.me](https://snooker.hubinette.me) and PR branches to temporary previews.
+
+There configuration is managed in [./terraform](terraform).
