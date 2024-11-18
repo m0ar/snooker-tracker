@@ -1,5 +1,9 @@
 import { writable, type Writable } from 'svelte/store';
 
+const modLogCtx = {
+  module: 'snooker-store',
+};
+
 type Player = 0 | 1;
 
 export interface GameState {
@@ -67,14 +71,22 @@ interface SnookerStore extends Writable<GameState> {
   getState: () => GameState;
 }
 const validatePot = (state: GameState, color: ColorName): boolean => {
+  const logCtx = { ...modLogCtx, fn: 'validatePot', params: { state, color } };
   // Check if trying to pot wrong ball type
-  if (!state.onRed && color === 'red') return false;
-  if (state.onRed && color !== 'red') return false;
+  if (!state.onRed && color === 'red') {
+    console.warn({ ...logCtx, wanted: 'colored' }, 'invalid pot');
+    return false;
+  }
+  if (state.onRed && color !== 'red') {
+    console.warn({ ...logCtx, wanted: 'red' }, 'invalid pot');
+    return false;
+  }
 
   // Check end game sequence
-  if (state.redsRemaining === 0) {
-    const expectedColor = getColors().at(-state.colorsRemaining)![0];
-    if (color !== expectedColor) return false;
+  const expectedColor = getColors().at(-state.colorsRemaining)![0];
+  if (state.redsRemaining === 0 && color !== expectedColor) {
+    console.warn({ ...logCtx, wanted: expectedColor }, 'invalid pot');
+    return false;
   }
 
   return true;
@@ -127,21 +139,30 @@ export const createSnookerStore = (initialStateOverride?: Partial<GameState>): S
 
   const actions = {
     handlePot: (color: ColorName, points: number) => {
+      const logCtx = { ...modLogCtx, fn: 'handlePot', params: { color, points } };
       update((state) => {
         if (!validatePot(state, color)) {
+          console.debug({ ...logCtx, state }, 'invalid pot, state unchanged');
           return state;
         }
-        return updateStateWithPot(state, color, points);
+        const newState = updateStateWithPot(state, color, points);
+        console.debug({ ...logCtx, state, newState }, 'state changed');
+        return newState;
       });
     },
 
     handleMiss: () => {
-      update((state) => ({
-        ...state,
-        currentPlayer: togglePlayer(state.currentPlayer),
-        currentBreak: 0,
-        onRed: state.redsRemaining > 0,
-      }));
+      const logCtx = { ...modLogCtx, fn: 'handleMiss', params: {} };
+      update((state) => {
+        const newState = {
+          ...state,
+          currentPlayer: togglePlayer(state.currentPlayer),
+          currentBreak: 0,
+          onRed: state.redsRemaining > 0,
+        };
+        console.debug({ ...logCtx, state, newState }, 'state changed');
+        return newState;
+      });
     },
 
     showFoulSelection: () => {
@@ -159,6 +180,7 @@ export const createSnookerStore = (initialStateOverride?: Partial<GameState>): S
     },
 
     handleFoul: (points: FoulPoints, lostCurrentBall: boolean) => {
+      const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostCurrentBall } };
       update((state) => {
         const newState = { ...state };
 
@@ -176,25 +198,37 @@ export const createSnookerStore = (initialStateOverride?: Partial<GameState>): S
         newState.currentBreak = 0;
         newState.onRed = newState.redsRemaining > 0;
         newState.showFoulDialog = false;
+        console.debug({ ...logCtx, state, newState }, 'state changed');
         return newState;
       });
     },
 
     tossForRespot: () => {
-      update((state) => ({
-        ...state,
-        respotChoice: Math.random() < 0.5 ? 0 : 1,
-      }));
+      const logCtx = { ...modLogCtx, fn: 'tossForRespot', params: {} };
+      update((state) => {
+        const newState: GameState = {
+          ...state,
+          respotChoice: Math.random() < 0.5 ? 0 : 1,
+        };
+        console.debug({ ...logCtx, state, newState }, `state changed`);
+        return newState;
+      });
     },
 
     chooseRespotTurn: (goesFirst: boolean) => {
+      const logCtx = { ...modLogCtx, fn: 'chooseRespotTurn', params: {} };
       update((state) => {
-        if (state.respotChoice === undefined) return state;
-        return {
+        if (state.respotChoice === undefined) {
+          console.debug({ ...logCtx, state }, 'needs respotChoice, state unchanged');
+          return state;
+        }
+        const newState = {
           ...state,
           currentPlayer: goesFirst ? state.respotChoice : togglePlayer(state.respotChoice),
           respotChoice: undefined,
         };
+        console.debug({ ...logCtx, state, newState }, 'state changed');
+        return newState;
       });
     },
 

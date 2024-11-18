@@ -7,10 +7,10 @@ declare global {
       //     COUNTER: DurableObjectNamespace;
       // };
       context: {
-          waitUntil(promise: Promise<unknown>): void;
+        waitUntil(promise: Promise<unknown>): void;
       };
-      caches: CacheStorage & { default: Cache }
-  }
+      caches: CacheStorage & { default: Cache };
+    }
     // interface Error {}
     // interface Locals {}
     // interface PageData {}
