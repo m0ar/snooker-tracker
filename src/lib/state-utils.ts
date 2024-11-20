@@ -3,10 +3,11 @@ import { colors } from './types';
 import { Player } from './types';
 import type { ColorName, Color, GameState } from './types';
 
+export const getColors = (): [ColorName, Color][] =>
+  Object.entries(colors).slice(1) as [ColorName, Color][];
 
-export const getColors = (): [ColorName, Color][] => Object.entries(colors).slice(1) as [ColorName, Color][];
-
-export const togglePlayer = (current: Player): Player => (current === 0 ? 1 : 0);export const validatePot = (state: GameState, color: ColorName): boolean => {
+export const togglePlayer = (current: Player): Player => (current === 0 ? 1 : 0);
+export const validatePot = (state: GameState, color: ColorName): boolean => {
   const logCtx = { ...modLogCtx, fn: 'validatePot', params: { state, color } };
   // Check if trying to pot wrong ball type
   if (!state.onRed && color === 'red') {
@@ -42,7 +43,11 @@ const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
     winner: state.scores[0] > state.scores[1] ? 0 : 1,
   };
 };
-export const updateStateWithPot = (state: GameState, color: ColorName, points: number): GameState => {
+export const updateStateWithPot = (
+  state: GameState,
+  color: ColorName,
+  points: number,
+): GameState => {
   const newState = { ...state };
   const isEndPhase = state.redsRemaining === 0;
 
@@ -63,4 +68,3 @@ export const updateStateWithPot = (state: GameState, color: ColorName, points: n
 
   return newState;
 };
-

@@ -4,7 +4,7 @@ declare global {
   namespace App {
     interface Platform {
       env: {
-          KV_ONGOING: KVNamespace;
+        GAME_STATES: KVNamespace;
       };
       context: {
         waitUntil(promise: Promise<unknown>): void;

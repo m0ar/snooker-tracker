@@ -2,6 +2,7 @@ import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
 import type { ColorName, GameState, FoulPoints } from './types';
 import { togglePlayer, updateStateWithPot, validatePot } from './state-utils';
+import { writeRemoteState } from './api';
 
 export const modLogCtx = {
   module: 'snooker-store',
@@ -32,14 +33,19 @@ const createInitialState = (): GameState => ({
   gameId: createLongNameId(),
 });
 
-export const createSnookerStore = (
-  initialStateOverride?: Partial<GameState>
-): SnookerStore => {
+export const createSnookerStore = (initialStateOverride?: Partial<GameState>): SnookerStore => {
   const initialState = { ...createInitialState(), ...initialStateOverride };
   const { subscribe, set, update } = writable<GameState>(initialState);
 
+  let saveTimeout: NodeJS.Timeout | undefined = undefined;
   let currentState: GameState = initialState;
-  subscribe((state) => (currentState = state));
+
+  subscribe((state) => {
+    currentState = state;
+    // 5s debounce on remote writes
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => writeRemoteState(state), 5000);
+  });
 
   const actions = {
     handlePot: (color: ColorName, points: number) => {

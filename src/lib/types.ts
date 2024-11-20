@@ -32,4 +32,3 @@ export const colors = {
   pink: { points: 6, bg: 'bg-pink-600 hover:bg-pink-700' },
   black: { points: 7, bg: 'bg-black hover:bg-gray-900' },
 } as const;
-

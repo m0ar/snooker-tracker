@@ -1,7 +1,7 @@
 <script lang="ts">
   import { snookerStore } from '$lib/snooker-store';
   import { colors } from '$lib/types';
-  import { getColors } from '$lib/util';
+  import { getColors } from '$lib/state-utils';
   import FoulDialogue from './FoulDialogue.svelte';
 
   let colorsOn = $derived(getColors().slice(-$snookerStore.colorsRemaining));
