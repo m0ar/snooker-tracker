@@ -35,7 +35,7 @@ resource "cloudflare_pages_project" "snooker" {
       fail_open         = true
       usage_model       = "standard"
       kv_namespaces = {
-        KV_ONGOING = cloudflare_workers_kv_namespace.ongoing_games.id
+        GAME_STATES = cloudflare_workers_kv_namespace.ongoing_games.id
       }
     }
   }
