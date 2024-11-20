@@ -37,6 +37,7 @@
     "vitest": "^2.0.4"
   },
   "dependencies": {
+    "mnemonic-id": "^3.2.7",
     "pino": "^9.5.0"
   }
 }

@@ -1,3 +1,4 @@
+import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
 
 const modLogCtx = {
@@ -18,6 +19,7 @@ export interface GameState {
   respotChoice?: Player;
   isOver: boolean;
   winner?: Player;
+  gameId: string;
 }
 
 export type ColorName = 'red' | 'yellow' | 'green' | 'brown' | 'blue' | 'pink' | 'black';
@@ -57,6 +59,7 @@ const createInitialState = (): GameState => ({
   showFoulDialog: false,
   isRespot: false,
   isOver: false,
+  gameId: createLongNameId(),
 });
 
 interface SnookerStore extends Writable<GameState> {
