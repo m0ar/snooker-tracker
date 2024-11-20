@@ -1,7 +1,6 @@
 import { modLogCtx } from './snooker-store';
 import { colors } from './types';
-import { Player } from './types';
-import type { ColorName, Color, GameState } from './types';
+import type { Player, ColorName, Color, GameState } from './types';
 
 export const getColors = (): [ColorName, Color][] =>
   Object.entries(colors).slice(1) as [ColorName, Color][];

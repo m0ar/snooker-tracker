@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { snookerStore } from '$lib/snooker-store';
+  import { type SnookerStore } from '$lib/snooker-store';
   import { FOUL_POINTS } from '$lib/types';
+  const { store } = $props<{ store: SnookerStore }>();
 
   let selectedPoints: (typeof FOUL_POINTS)[number] | null = $state(null);
   let lostBall = $state(false);
@@ -23,10 +24,10 @@
       {/each}
     </div>
 
-    {#if $snookerStore.onRed || $snookerStore.redsRemaining === 0}
+    {#if $store.onRed || $store.redsRemaining === 0}
       <label class="mb-4 flex items-center gap-2">
         <input type="checkbox" class="h-4 w-4" bind:checked={lostBall} />
-        <span>{$snookerStore.onRed ? 'Red' : 'Color'} was lost</span>
+        <span>{$store.onRed ? 'Red' : 'Color'} was lost</span>
       </label>
     {/if}
 
@@ -34,14 +35,14 @@
       <button
         class="flex-1 rounded bg-red-500 p-2 text-white hover:bg-red-600"
         onclick={() => {
-          if (selectedPoints) snookerStore.handleFoul(selectedPoints, lostBall);
+          if (selectedPoints) store.handleFoul(selectedPoints, lostBall);
         }}
       >
         Confirm
       </button>
       <button
         class="flex-1 rounded bg-gray-500 p-2 text-white hover:bg-gray-600"
-        onclick={() => snookerStore.cancelFoul()}
+        onclick={() => store.cancelFoul()}
       >
         Cancel
       </button>

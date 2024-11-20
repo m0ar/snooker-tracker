@@ -1,123 +1,61 @@
 <script lang="ts">
-  import { snookerStore } from '$lib/snooker-store';
-  import { colors } from '$lib/types';
-  import { getColors } from '$lib/state-utils';
-  import FoulDialogue from './FoulDialogue.svelte';
+  import { goto } from '$app/navigation';
 
-  let colorsOn = $derived(getColors().slice(-$snookerStore.colorsRemaining));
+  let gameId: string | undefined;
+  let loading = false;
+  let error: string | undefined;
+
+  async function loadGame() {
+    loading = true;
+    error = '';
+    try {
+      const res = await fetch(`/api/game/${gameId}`);
+      if (!res.ok) {
+        throw new Error('Game not found');
+      }
+      await res.json(); // Verify game exists
+      goto(`/game/${gameId}`);
+    } catch {
+      error = 'Failed to load game';
+      loading = false;
+    }
+  }
+
+  function startNewGame() {
+    goto('/game');
+  }
 </script>
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-  <div class="mb-6 flex justify-between">
-    <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={$snookerStore.currentPlayer === 0}>
-        Player 1
-      </div>
-      <div class="text-3xl">{$snookerStore.scores[0]}</div>
-    </div>
-    <div class="text-center">
-      <div>Current Break</div>
-      <div class="text-2xl">{$snookerStore.currentBreak}</div>
-    </div>
-    <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={$snookerStore.currentPlayer === 1}>
-        Player 2
-      </div>
-      <div class="text-3xl">{$snookerStore.scores[1]}</div>
-    </div>
-  </div>
+  <h1 class="mb-4 text-xl font-bold">Snooker Scorer</h1>
 
-  {#if $snookerStore.isOver}
-    <div class="mb-6 text-center">
-      <div class="text-2xl font-bold text-blue-600">Game Over!</div>
-      <div class="mt-2 text-xl">
-        Player {$snookerStore.winner! + 1} wins!
-      </div>
+  <div class="space-y-4">
+    <button
+      class="w-full rounded bg-green-500 p-2 text-white hover:bg-green-600"
+      on:click={startNewGame}
+    >
+      New Game
+    </button>
+
+    <div class="text-center">or</div>
+
+    <div class="space-y-2">
+      <input
+        type="text"
+        bind:value={gameId}
+        placeholder="Enter Game ID"
+        class="w-full rounded border p-2"
+      />
+      {#if error}
+        <div class="text-sm text-red-500">{error}</div>
+      {/if}
       <button
-        class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-        onclick={() => snookerStore.resetGame()}
+        class="w-full rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
+        on:click={loadGame}
+        disabled={!gameId || loading}
       >
-        New Game
+        Load Game
       </button>
     </div>
-  {:else}
-    <div class="mb-4 text-center">
-      <div>Reds Remaining: {$snookerStore.redsRemaining}</div>
-
-      {#if $snookerStore.isRespot && $snookerStore.respotChoice === undefined}
-        <div class="mt-2 text-sm text-gray-600">
-          {#if $snookerStore.respotChoice === undefined}
-            <button
-              class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
-              onclick={() => snookerStore.tossForRespot()}
-            >
-              Toss coin for re-spot
-            </button>
-          {:else}
-            <div>
-              Player {$snookerStore.respotChoice + 1} to choose who goes first
-              <div class="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                  onclick={() => snookerStore.chooseRespotTurn(true)}
-                >
-                  Go First
-                </button>
-                <button
-                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                  onclick={() => snookerStore.chooseRespotTurn(false)}
-                >
-                  Go Second
-                </button>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {/if}
-    </div>
-
-    <div class="space-y-4">
-      <!-- Ball buttons -->
-      <div class="grid grid-cols-3 gap-2">
-        {#if $snookerStore.onRed}
-          <button
-            class="rounded p-2 text-white {colors.red.bg}"
-            onclick={() => snookerStore.handlePot('red', 1)}
-            disabled={$snookerStore.redsRemaining === 0}
-          >
-            Red
-          </button>
-        {:else}
-          {#each colorsOn as [color, { points, bg }]}
-            <button
-              class="rounded p-2 text-white {bg}"
-              onclick={() => snookerStore.handlePot(color, points)}
-            >
-              {color} ({points})
-            </button>
-          {/each}
-        {/if}
-      </div>
-
-      <!-- Miss/Foul buttons -->
-      <div class="grid grid-cols-2 gap-2">
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.handleMiss()}
-        >
-          Miss
-        </button>
-        <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => snookerStore.showFoulSelection()}
-        >
-          Foul
-        </button>
-      </div>
-    </div>
-  {/if}
+  </div>
 </div>
-
-{#if $snookerStore.showFoulDialog}
-  <FoulDialogue />
-{/if}
