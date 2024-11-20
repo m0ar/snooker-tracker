@@ -27,7 +27,7 @@
 </script>
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-  <h1 class="mb-4 text-xl font-bold">Snooker Scorer</h1>
+  <h1 class="mb-4 text-xl font-bold">Snooker Tracker</h1>
 
   <div class="space-y-4">
     <button
