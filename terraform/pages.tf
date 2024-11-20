@@ -12,9 +12,9 @@ resource "cloudflare_pages_project" "snooker" {
       pr_comments_enabled           = true
       deployments_enabled           = true
       production_deployment_enabled = true
-      preview_deployment_setting    = "custom"
-      preview_branch_includes       = ["*"]
-      preview_branch_excludes       = ["main"]
+      preview_deployment_setting    = "none"
+      # preview_branch_includes       = ["*"]
+      # preview_branch_excludes       = ["main"]
     }
   }
 
@@ -25,15 +25,18 @@ resource "cloudflare_pages_project" "snooker" {
   }
 
   deployment_configs {
-    preview {
-      compatibility_date = "2024-11-18"
-      fail_open         = true
-      usage_model       = "standard"
-    }
+    # preview {
+    #   compatibility_date = "2024-11-18"
+    #   fail_open         = true
+    #   usage_model       = "standard"
+    # }
     production {
       compatibility_date = "2024-11-18"
       fail_open         = true
       usage_model       = "standard"
+      kv_namespaces = {
+        KV_ONGOING = cloudflare_workers_kv_namespace.ongoing_games.id
+      }
     }
   }
 }

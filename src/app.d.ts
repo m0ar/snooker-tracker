@@ -3,9 +3,9 @@
 declare global {
   namespace App {
     interface Platform {
-      // env: {
-      //     COUNTER: DurableObjectNamespace;
-      // };
+      env: {
+          KV_ONGOING: KVNamespace;
+      };
       context: {
         waitUntil(promise: Promise<unknown>): void;
       };

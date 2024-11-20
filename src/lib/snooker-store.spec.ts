@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { createSnookerStore, type GameState } from './snooker-store';
+import { createSnookerStore } from './snooker-store';
+import { type GameState } from './types';
 
 describe('snooker store', () => {
   describe('handlePot', () => {

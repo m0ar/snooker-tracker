@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { FOUL_POINTS, snookerStore } from '$lib/snooker-store';
+  import { snookerStore } from '$lib/snooker-store';
+  import { FOUL_POINTS } from '$lib/types';
 
   let selectedPoints: (typeof FOUL_POINTS)[number] | null = $state(null);
   let lostBall = $state(false);
