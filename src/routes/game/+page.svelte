@@ -1,132 +1,121 @@
 <script lang="ts">
-  import { createSnookerStore, type SnookerStore } from '$lib/snooker-store';
+  import { createSnookerStore } from '$lib/snooker-store';
   import { colors } from '$lib/types';
   import { getColors } from '$lib/state-utils';
   import FoulDialogue from '../FoulDialogue.svelte';
-  import { onMount } from 'svelte';
 
-  export let data;
-  let store: SnookerStore;
-
-  onMount(() => {
-    store = createSnookerStore(data.initialState);
-  });
-  $: colorsOn = store && getColors().slice(-$store.colorsRemaining);
+  const { data } = $props();
+  const store = createSnookerStore(data.initialState);
+  const colorsOn = $derived(getColors().slice(-$store.colorsRemaining));
 </script>
 
-{#if store}
-  <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-    <div class="mb-6 flex justify-between">
-      <div class="text-center">
-        <div class="text-xl font-bold" class:text-blue-600={$store.currentPlayer === 0}>
-          Player 1
+<div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+  <div class="mb-6 flex justify-between">
+    <div class="text-center">
+      <div class="text-xl font-bold" class:text-blue-600={$store.currentPlayer === 0}>Player 1</div>
+      <div class="text-3xl">{$store.scores[0]}</div>
+    </div>
+    <div class="text-center">
+      <div>Current Break</div>
+      <div class="text-2xl">{$store.currentBreak}</div>
+    </div>
+    <div class="text-center">
+      <div class="text-xl font-bold" class:text-blue-600={$store.currentPlayer === 1}>Player 2</div>
+      <div class="text-3xl">{$store.scores[1]}</div>
+    </div>
+  </div>
+
+  {#if $store.isOver}
+    <div class="mb-6 text-center">
+      <div class="text-2xl font-bold text-blue-600">Game Over!</div>
+      <div class="mt-2 text-xl">
+        Player {$store.winner! + 1} wins!
+      </div>
+      <button
+        class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        onclick={() => store.resetGame()}
+      >
+        New Game
+      </button>
+    </div>
+  {:else}
+    <div class="mb-4 text-center">
+      <div>Reds Remaining: {$store.redsRemaining}</div>
+
+      {#if $store.isRespot && $store.respotChoice === undefined}
+        <div class="mt-2 text-sm text-gray-600">
+          {#if $store.respotChoice === undefined}
+            <button
+              class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
+              onclick={() => store.tossForRespot()}
+            >
+              Toss coin for re-spot
+            </button>
+          {:else}
+            <div>
+              Player {$store.respotChoice + 1} to choose who goes first
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                  onclick={() => store.chooseRespotTurn(true)}
+                >
+                  Go First
+                </button>
+                <button
+                  class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+                  onclick={() => store.chooseRespotTurn(false)}
+                >
+                  Go Second
+                </button>
+              </div>
+            </div>
+          {/if}
         </div>
-        <div class="text-3xl">{$store.scores[0]}</div>
-      </div>
-      <div class="text-center">
-        <div>Current Break</div>
-        <div class="text-2xl">{$store.currentBreak}</div>
-      </div>
-      <div class="text-center">
-        <div class="text-xl font-bold" class:text-blue-600={$store.currentPlayer === 1}>
-          Player 2
-        </div>
-        <div class="text-3xl">{$store.scores[1]}</div>
-      </div>
+      {/if}
     </div>
 
-    {#if $store.isOver}
-      <div class="mb-6 text-center">
-        <div class="text-2xl font-bold text-blue-600">Game Over!</div>
-        <div class="mt-2 text-xl">
-          Player {$store.winner! + 1} wins!
-        </div>
-        <button
-          class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-          onclick={() => store.resetGame()}
-        >
-          New Game
-        </button>
-      </div>
-    {:else}
-      <div class="mb-4 text-center">
-        <div>Reds Remaining: {$store.redsRemaining}</div>
-
-        {#if $store.isRespot && $store.respotChoice === undefined}
-          <div class="mt-2 text-sm text-gray-600">
-            {#if $store.respotChoice === undefined}
-              <button
-                class="rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
-                onclick={() => store.tossForRespot()}
-              >
-                Toss coin for re-spot
-              </button>
-            {:else}
-              <div>
-                Player {$store.respotChoice + 1} to choose who goes first
-                <div class="mt-2 grid grid-cols-2 gap-2">
-                  <button
-                    class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                    onclick={() => store.chooseRespotTurn(true)}
-                  >
-                    Go First
-                  </button>
-                  <button
-                    class="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-                    onclick={() => store.chooseRespotTurn(false)}
-                  >
-                    Go Second
-                  </button>
-                </div>
-              </div>
-            {/if}
-          </div>
+    <div class="space-y-4">
+      <!-- Ball buttons -->
+      <div class="grid grid-cols-3 gap-2">
+        {#if $store.onRed}
+          <button
+            class="rounded p-2 text-white {colors.red.bg}"
+            onclick={() => store.handlePot('red', 1)}
+            disabled={$store.redsRemaining === 0}
+          >
+            Red
+          </button>
+        {:else}
+          {#each colorsOn as [color, { points, bg }]}
+            <button
+              class="rounded p-2 text-white {bg}"
+              onclick={() => store.handlePot(color, points)}
+            >
+              {color} ({points})
+            </button>
+          {/each}
         {/if}
       </div>
 
-      <div class="space-y-4">
-        <!-- Ball buttons -->
-        <div class="grid grid-cols-3 gap-2">
-          {#if $store.onRed}
-            <button
-              class="rounded p-2 text-white {colors.red.bg}"
-              onclick={() => store.handlePot('red', 1)}
-              disabled={$store.redsRemaining === 0}
-            >
-              Red
-            </button>
-          {:else}
-            {#each colorsOn as [color, { points, bg }]}
-              <button
-                class="rounded p-2 text-white {bg}"
-                onclick={() => store.handlePot(color, points)}
-              >
-                {color} ({points})
-              </button>
-            {/each}
-          {/if}
-        </div>
-
-        <!-- Miss/Foul buttons -->
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-            onclick={() => store.handleMiss()}
-          >
-            Miss
-          </button>
-          <button
-            class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-            onclick={() => store.showFoulSelection()}
-          >
-            Foul
-          </button>
-        </div>
+      <!-- Miss/Foul buttons -->
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          onclick={() => store.handleMiss()}
+        >
+          Miss
+        </button>
+        <button
+          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          onclick={() => store.showFoulSelection()}
+        >
+          Foul
+        </button>
       </div>
-    {/if}
-  </div>
-
-  {#if $store.showFoulDialog}
-    <FoulDialogue {store} />
+    </div>
   {/if}
+</div>
+
+{#if $store.showFoulDialog}
+  <FoulDialogue {store} />
 {/if}
