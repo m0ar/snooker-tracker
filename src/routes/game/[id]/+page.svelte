@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GameComponent from './GameComponent.svelte';
+  import GameComponent from '../GameComponent.svelte';
   const { data } = $props();
 </script>
 
