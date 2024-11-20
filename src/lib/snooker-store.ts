@@ -44,7 +44,7 @@ export const createSnookerStore = (initialStateOverride?: Partial<GameState>): S
     currentState = state;
     // 5s debounce on remote writes
     clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => writeRemoteState(state), 5000);
+    saveTimeout = setTimeout(() => writeRemoteState(state), 1_000);
   });
 
   const actions = {
