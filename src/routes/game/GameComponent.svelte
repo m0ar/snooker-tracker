@@ -16,6 +16,7 @@
       <div class="text-3xl">{$store.scores[0]}</div>
     </div>
     <div class="text-center">
+      <div>{$store.gameId}</div>
       <div>Current Break</div>
       <div class="text-2xl">{$store.currentBreak}</div>
     </div>
