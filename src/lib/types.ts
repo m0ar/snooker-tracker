@@ -5,19 +5,39 @@ export interface GameState {
   redsRemaining: number;
   colorsRemaining: number;
   currentBreak: number;
-  showFoulDialog: boolean;
   isRespot: boolean;
   respotChoice?: Player;
   isOver: boolean;
   winner?: Player;
-  gameId: string;
 }
 
+export interface PersistedGame {
+  gameId: string;
+  events: GameEvent[];
+  // Could add metadata like startTime, players, etc
+}
+
+// runtime-only UI state
+export interface UIState {
+  showFoulDialog: boolean;
+}
+
+export type GameEvent = {
+  timestamp: number;
+  sequenceNumber: number; // Prevent race conditions/ordering issues
+} & (
+  | { type: 'POT'; player: Player; color: ColorName; points: number }
+  | { type: 'MISS'; player: Player }
+  | { type: 'FOUL'; player: Player; points: FoulPoints; lostBall: boolean }
+  | { type: 'RESPOT_TOSS'; winner: Player }
+  | { type: 'RESPOT_CHOICE'; player: Player; goFirst: boolean }
+);
+
 export type ColorName = 'red' | 'yellow' | 'green' | 'brown' | 'blue' | 'pink' | 'black';
-export interface Color {
+export type Color = {
   points: number;
   bg: string;
-}
+};
 export const FOUL_POINTS = [4, 5, 6, 7] as const;
 export type FoulPoints = (typeof FOUL_POINTS)[number];
 export type Colors = typeof colors;

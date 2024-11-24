@@ -1,9 +1,62 @@
-import { modLogCtx } from './snooker-store';
+import { createInitialState, modLogCtx } from './snooker-store';
 import { colors } from './types';
-import type { Player, ColorName, Color, GameState } from './types';
+import type { Player, ColorName, Color, GameState, GameEvent } from './types';
 
 export const getColors = (): [ColorName, Color][] =>
   Object.entries(colors).slice(1) as [ColorName, Color][];
+
+export const updateStateWithEvent = (
+  event: GameEvent,
+  state: GameState = createInitialState(),
+): GameState => {
+  switch (event.type) {
+    case 'POT': {
+      if (!validatePot(state, event.color)) {
+        return state;
+      }
+      return updateStateWithPot(state, event.color, event.points, event.player);
+    }
+
+    case 'MISS':
+      return {
+        ...state,
+        currentPlayer: togglePlayer(state.currentPlayer),
+        currentBreak: 0,
+        onRed: state.redsRemaining > 0,
+      } satisfies GameState;
+
+    case 'FOUL': {
+      const newState = { ...state };
+      newState.scores[togglePlayer(state.currentPlayer)] += event.points;
+
+      if (event.lostBall) {
+        if (newState.onRed) {
+          newState.redsRemaining -= 1;
+        } else {
+          newState.colorsRemaining -= 1;
+        }
+      }
+
+      newState.currentPlayer = togglePlayer(state.currentPlayer);
+      newState.currentBreak = 0;
+      newState.onRed = newState.redsRemaining > 0;
+      return newState satisfies GameState;
+    }
+
+    case 'RESPOT_TOSS':
+      return {
+        ...state,
+        respotChoice: event.winner,
+      } satisfies GameState;
+
+    case 'RESPOT_CHOICE':
+      return {
+        ...state,
+        currentPlayer: event.goFirst ? event.player : togglePlayer(event.player),
+        respotChoice: undefined,
+      } satisfies GameState;
+  }
+};
 
 export const togglePlayer = (current: Player): Player => (current === 0 ? 1 : 0);
 export const validatePot = (state: GameState, color: ColorName): boolean => {
@@ -42,15 +95,17 @@ const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
     winner: state.scores[0] > state.scores[1] ? 0 : 1,
   };
 };
+
 export const updateStateWithPot = (
   state: GameState,
   color: ColorName,
   points: number,
+  player: Player,
 ): GameState => {
   const newState = { ...state };
   const isEndPhase = state.redsRemaining === 0;
 
-  newState.scores[state.currentPlayer] += points;
+  newState.scores[player] += points;
   newState.currentBreak += points;
 
   if (color === 'red') {

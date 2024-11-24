@@ -1,14 +1,20 @@
 import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
-import type { ColorName, GameState, FoulPoints } from './types';
-import { togglePlayer, updateStateWithPot, validatePot } from './state-utils';
+import type { ColorName, GameState, FoulPoints, GameEvent, PersistedGame, UIState } from './types';
+import { updateStateWithEvent, validatePot } from './state-utils';
 import { writeRemoteState } from './api';
 
 export const modLogCtx = {
   module: 'snooker-store',
 };
 
-export interface SnookerStore extends Writable<GameState> {
+type Store = PersistedGame & {
+  currentState: GameState;
+  ui: UIState;
+};
+
+interface SnookerStore extends Writable<Store> {
+  // appendEvent: (event: GameEvent) => void;
   handlePot: (color: ColorName, points: number) => void;
   handleMiss: () => void;
   handleFoul: (points: FoulPoints, lostCurrentBall: boolean) => void;
@@ -17,137 +23,185 @@ export interface SnookerStore extends Writable<GameState> {
   tossForRespot: () => void;
   chooseRespotTurn: (goesFirst: boolean) => void;
   resetGame: () => void;
-  getState: () => GameState;
+  getState: () => Store;
 }
 
-const createInitialState = (): GameState => ({
+export const createInitialState = (): GameState => ({
   currentPlayer: 0,
   scores: [0, 0],
   onRed: true,
   redsRemaining: 15,
   colorsRemaining: 6,
   currentBreak: 0,
-  showFoulDialog: false,
   isRespot: false,
   isOver: false,
-  gameId: createLongNameId(),
 });
 
-export const createSnookerStore = (initialStateOverride?: Partial<GameState>): SnookerStore => {
-  const initialState = { ...createInitialState(), ...initialStateOverride };
-  const { subscribe, set, update } = writable<GameState>(initialState);
+export const createSnookerStore = (
+  persistedGame?: PersistedGame,
+  stateOverride?: GameState,
+): SnookerStore => {
+  const initial = persistedGame || {
+    gameId: createLongNameId(),
+    events: [],
+  };
 
-  let saveTimeout: NodeJS.Timeout | undefined = undefined;
-  let currentState: GameState = initialState;
+  let currentState;
+  if (stateOverride !== undefined) {
+    currentState = stateOverride;
+  } else {
+    currentState = initial.events.reduce(
+      (state, event) => updateStateWithEvent(event, state),
+      createInitialState(),
+    );
+  }
 
-  subscribe((state) => {
-    currentState = state;
-    // 5s debounce on remote writes
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => writeRemoteState(state), 1_000);
+  const { subscribe, set, update } = writable({
+    ...initial,
+    currentState,
+    ui: { showFoulDialog: false },
   });
+
+  let currentStore: Store;
+
+  // Modified save debounce to only persist events
+  let saveTimeout: NodeJS.Timeout;
+  subscribe((store) => {
+    currentStore = store;
+    console.log('Current store:', JSON.stringify(currentStore, undefined, 2));
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(
+      () =>
+        writeRemoteState({
+          gameId: store.gameId,
+          events: store.events,
+        }),
+      1_000,
+    );
+  });
+
+  const appendEvent = (store: Store, event: Omit<GameEvent, 'timestamp' | 'sequenceNumber'>) => {
+    const newEvent = {
+      ...event,
+      timestamp: Date.now(),
+      sequenceNumber: store.events.length,
+    } as GameEvent;
+
+    return {
+      ...store,
+      events: [...store.events, newEvent],
+      currentState: updateStateWithEvent(newEvent, store.currentState),
+    };
+  };
 
   const actions = {
     handlePot: (color: ColorName, points: number) => {
       const logCtx = { ...modLogCtx, fn: 'handlePot', params: { color, points } };
-      update((state) => {
-        if (!validatePot(state, color)) {
-          console.debug({ ...logCtx, state }, 'invalid pot, state unchanged');
-          return state;
+
+      update((store) => {
+        if (!validatePot(store.currentState, color)) {
+          console.debug({ ...logCtx, state: store }, 'invalid pot, state unchanged');
+          return store;
         }
-        const newState = updateStateWithPot(state, color, points);
-        console.debug({ ...logCtx, state, newState }, 'state changed');
-        return newState;
+
+        const newEvent = {
+          type: 'POT' as const,
+          player: store.currentState.currentPlayer,
+          color,
+          points,
+        };
+
+        return appendEvent(store, newEvent);
       });
     },
 
     handleMiss: () => {
-      const logCtx = { ...modLogCtx, fn: 'handleMiss', params: {} };
-      update((state) => {
-        const newState = {
-          ...state,
-          currentPlayer: togglePlayer(state.currentPlayer),
-          currentBreak: 0,
-          onRed: state.redsRemaining > 0,
+      // const logCtx = { ...modLogCtx, fn: 'handleMiss', params: {} };
+
+      update((store) => {
+        const newEvent = {
+          type: 'MISS' as const,
+          player: store.currentState.currentPlayer,
         };
-        console.debug({ ...logCtx, state, newState }, 'state changed');
-        return newState;
+
+        return appendEvent(store, newEvent);
       });
     },
 
-    showFoulSelection: () => {
-      update((state) => ({
-        ...state,
-        showFoulDialog: true,
-      }));
-    },
+    handleFoul: (points: FoulPoints, lostBall: boolean) => {
+      // const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostBall } };
 
-    cancelFoul: () => {
-      update((state) => ({
-        ...state,
-        showFoulDialog: false,
-      }));
-    },
+      update((store) => {
+        const newEvent = {
+          type: 'FOUL' as const,
+          player: store.currentState.currentPlayer,
+          points,
+          lostBall,
+        };
 
-    handleFoul: (points: FoulPoints, lostCurrentBall: boolean) => {
-      const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostCurrentBall } };
-      update((state) => {
-        const newState = { ...state };
-
-        newState.scores[togglePlayer(state.currentPlayer)] += points;
-
-        if (lostCurrentBall) {
-          if (newState.onRed) {
-            newState.redsRemaining -= 1;
-          } else {
-            newState.colorsRemaining -= 1;
-          }
-        }
-
-        newState.currentPlayer = togglePlayer(state.currentPlayer);
-        newState.currentBreak = 0;
-        newState.onRed = newState.redsRemaining > 0;
-        newState.showFoulDialog = false;
-        console.debug({ ...logCtx, state, newState }, 'state changed');
-        return newState;
+        return appendEvent(store, newEvent);
       });
     },
 
     tossForRespot: () => {
-      const logCtx = { ...modLogCtx, fn: 'tossForRespot', params: {} };
-      update((state) => {
-        const newState: GameState = {
-          ...state,
-          respotChoice: Math.random() < 0.5 ? 0 : 1,
+      // const logCtx = { ...modLogCtx, fn: 'tossForRespot', params: {} };
+
+      update((store) => {
+        const newEvent = {
+          type: 'RESPOT_TOSS' as const,
+          winner: Math.random() < 0.5 ? 0 : 1,
         };
-        console.debug({ ...logCtx, state, newState }, `state changed`);
-        return newState;
+
+        return appendEvent(store, newEvent);
       });
     },
 
-    chooseRespotTurn: (goesFirst: boolean) => {
-      const logCtx = { ...modLogCtx, fn: 'chooseRespotTurn', params: {} };
-      update((state) => {
-        if (state.respotChoice === undefined) {
-          console.debug({ ...logCtx, state }, 'needs respotChoice, state unchanged');
-          return state;
+    chooseRespotTurn: (goFirst: boolean) => {
+      const logCtx = { ...modLogCtx, fn: 'chooseRespotTurn', params: { goFirst } };
+
+      update((store) => {
+        if (store.currentState.respotChoice === undefined) {
+          console.debug({ ...logCtx, state: store }, 'needs respotChoice, state unchanged');
+          return store;
         }
-        const newState = {
-          ...state,
-          currentPlayer: goesFirst ? state.respotChoice : togglePlayer(state.respotChoice),
-          respotChoice: undefined,
+
+        const newEvent = {
+          type: 'RESPOT_CHOICE' as const,
+          player: store.currentState.respotChoice,
+          goFirst,
         };
-        console.debug({ ...logCtx, state, newState }, 'state changed');
-        return newState;
+
+        // console.debug({ ...logCtx, state: store, newEvents }, 'state changed');
+
+        return appendEvent(store, newEvent);
       });
+    },
+
+    showFoulSelection: () => {
+      update((store) => ({
+        ...store,
+        ui: { ...store.ui, showFoulDialog: true },
+      }));
+    },
+
+    cancelFoul: () => {
+      update((store) => ({
+        ...store,
+        ui: { ...store.ui, showFoulDialog: false },
+      }));
     },
 
     resetGame: () => {
-      set(createInitialState());
+      const newStore = {
+        gameId: createLongNameId(),
+        events: [],
+        currentState: createInitialState(),
+        ui: { showFoulDialog: false },
+      };
+      set(newStore);
     },
 
-    // Test helper
-    getState: () => currentState,
+    getState: () => currentStore,
   };
 
   return {

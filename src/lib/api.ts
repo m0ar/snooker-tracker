@@ -1,6 +1,6 @@
-import type { GameState } from './types';
+import type { PersistedGame } from './types';
 
-export const writeRemoteState = async (state: GameState) => {
+export const writeRemoteState = async (state: PersistedGame) => {
   try {
     await fetch('/api/game', {
       method: 'POST',
