@@ -3,10 +3,17 @@
   import { colors } from '$lib/types';
   import { getColors } from '$lib/state-utils';
   import FoulDialogue from '../FoulDialogue.svelte';
+  import { onMount } from 'svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
   const colorsOn = $derived(getColors().slice(-$store.colorsRemaining));
+
+  onMount(() => {
+    if (!data.initialState) {
+      history.replaceState({}, '', `/game/${$store.gameId}`);
+    }
+  });
 </script>
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
