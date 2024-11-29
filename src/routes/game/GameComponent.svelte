@@ -129,7 +129,7 @@
       </div>
     </div>
 
-    <EventList events={$store.events} />
+    <EventList events={$store.events} onUndo={store.undoLastEvent} />
   {/if}
 </div>
 

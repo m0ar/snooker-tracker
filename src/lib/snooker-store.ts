@@ -21,6 +21,7 @@ export interface SnookerStore extends Writable<Store> {
   chooseRespotTurn: (goesFirst: boolean) => void;
   resetGame: () => void;
   getState: () => Store;
+  undoLastEvent: () => void;
 }
 
 export const createInitialState = (): GameState => ({
@@ -180,6 +181,21 @@ export const createSnookerStore = (
       };
       set(newStore);
       pushState(`/game/${newStore.gameId}`, {});
+    },
+
+    undoLastEvent: () => {
+      update((store) => {
+        const newEvents = store.events.slice(0, -1);
+        return {
+          ...store,
+          events: newEvents,
+          // Recompute game state from events
+          currentState: newEvents.reduce(
+            (state, event) => updateStateWithEvent(event, state),
+            createInitialState(),
+          ),
+        };
+      });
     },
 
     getState: () => currentStore,
