@@ -38,7 +38,6 @@ export const createSnookerStore = (
   persistedGame?: PersistedGame,
   stateOverride?: GameState,
 ): SnookerStore => {
-  console.log('Store initialized:', new Error().stack);
   const initial = persistedGame || {
     gameId: createLongNameId(),
     events: [],

@@ -6,6 +6,7 @@
   import { onMount } from 'svelte';
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
+  import EventList from '../EventList.svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
@@ -127,6 +128,8 @@
         </button>
       </div>
     </div>
+
+    <EventList events={$store.events} />
   {/if}
 </div>
 

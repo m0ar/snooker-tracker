@@ -1,6 +1,7 @@
 import { createInitialState, modLogCtx } from './snooker-store';
 import { colors } from './types';
 import type { Player, ColorName, Color, GameState, GameEvent } from './types';
+import { exhaustiveAssert } from './util';
 
 export const getColors = (): [ColorName, Color][] =>
   Object.entries(colors).slice(1) as [ColorName, Color][];
@@ -121,4 +122,21 @@ export const updateStateWithPot = (
   }
 
   return newState;
+};
+
+export const formatEvent = (event: GameEvent): string => {
+  switch (event.type) {
+    case 'POT':
+      return `Player ${event.player + 1} pots ${event.color}`;
+    case 'MISS':
+      return `Player ${event.player + 1} misses`;
+    case 'FOUL':
+      return `Player ${event.player + 1} fouls (${event.points} points)`;
+    case 'RESPOT_TOSS':
+      return `Player ${event.winner + 1} wins respot toss`;
+    case 'RESPOT_CHOICE':
+      return `Player ${event.player + 1} chooses to go ${event.goFirst ? 'first' : 'second'}`;
+    default:
+      return exhaustiveAssert(event);
+  }
 };
