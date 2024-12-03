@@ -4,15 +4,18 @@
   import { getColors } from '$lib/state-utils';
   import FoulDialogue from '../FoulDialogue.svelte';
   import { onMount } from 'svelte';
+  import { replaceState } from '$app/navigation';
+  import { page } from '$app/stores';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
-  const game = $store.currentState;
+  const game = $derived($store.currentState);
   const colorsOn = $derived(getColors().slice(-game.colorsRemaining));
+  let showFoulDialog = $state(false);
 
   onMount(() => {
     if (!data.initialState) {
-      history.replaceState({}, '', `/game/${$store.gameId}`);
+      replaceState(`/game/${$store.gameId}`, $page.state);
     }
   });
 </script>
@@ -116,7 +119,9 @@
         </button>
         <button
           class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
-          onclick={() => store.showFoulSelection()}
+          onclick={() => {
+            showFoulDialog = true;
+          }}
         >
           Foul
         </button>
@@ -125,6 +130,11 @@
   {/if}
 </div>
 
-{#if $store.ui.showFoulDialog}
-  <FoulDialogue {store} />
+{#if showFoulDialog}
+  <FoulDialogue
+    {store}
+    onClose={() => {
+      showFoulDialog = false;
+    }}
+  />
 {/if}

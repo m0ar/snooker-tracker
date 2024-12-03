@@ -17,11 +17,6 @@ export interface PersistedGame {
   // Could add metadata like startTime, players, etc
 }
 
-// runtime-only UI state
-export interface UIState {
-  showFoulDialog: boolean;
-}
-
 export type GameEvent = {
   timestamp: number;
   sequenceNumber: number; // Prevent race conditions/ordering issues

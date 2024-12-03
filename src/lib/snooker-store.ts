@@ -1,8 +1,9 @@
 import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
-import type { ColorName, GameState, FoulPoints, GameEvent, PersistedGame, UIState } from './types';
+import type { ColorName, GameState, FoulPoints, GameEvent, PersistedGame } from './types';
 import { updateStateWithEvent, validatePot } from './state-utils';
 import { writeRemoteState } from './api';
+import { pushState } from '$app/navigation';
 
 export const modLogCtx = {
   module: 'snooker-store',
@@ -10,16 +11,12 @@ export const modLogCtx = {
 
 type Store = PersistedGame & {
   currentState: GameState;
-  ui: UIState;
 };
 
-interface SnookerStore extends Writable<Store> {
-  // appendEvent: (event: GameEvent) => void;
+export interface SnookerStore extends Writable<Store> {
   handlePot: (color: ColorName, points: number) => void;
   handleMiss: () => void;
   handleFoul: (points: FoulPoints, lostCurrentBall: boolean) => void;
-  showFoulSelection: () => void;
-  cancelFoul: () => void;
   tossForRespot: () => void;
   chooseRespotTurn: (goesFirst: boolean) => void;
   resetGame: () => void;
@@ -41,6 +38,7 @@ export const createSnookerStore = (
   persistedGame?: PersistedGame,
   stateOverride?: GameState,
 ): SnookerStore => {
+  console.log('Store initialized:', new Error().stack);
   const initial = persistedGame || {
     gameId: createLongNameId(),
     events: [],
@@ -59,12 +57,10 @@ export const createSnookerStore = (
   const { subscribe, set, update } = writable({
     ...initial,
     currentState,
-    ui: { showFoulDialog: false },
   });
 
   let currentStore: Store;
 
-  // Modified save debounce to only persist events
   let saveTimeout: NodeJS.Timeout;
   subscribe((store) => {
     currentStore = store;
@@ -177,28 +173,14 @@ export const createSnookerStore = (
       });
     },
 
-    showFoulSelection: () => {
-      update((store) => ({
-        ...store,
-        ui: { ...store.ui, showFoulDialog: true },
-      }));
-    },
-
-    cancelFoul: () => {
-      update((store) => ({
-        ...store,
-        ui: { ...store.ui, showFoulDialog: false },
-      }));
-    },
-
     resetGame: () => {
       const newStore = {
         gameId: createLongNameId(),
         events: [],
         currentState: createInitialState(),
-        ui: { showFoulDialog: false },
       };
       set(newStore);
+      pushState(`/game/${newStore.gameId}`, {});
     },
 
     getState: () => currentStore,
@@ -211,5 +193,3 @@ export const createSnookerStore = (
     ...actions,
   };
 };
-
-export const snookerStore = createSnookerStore();

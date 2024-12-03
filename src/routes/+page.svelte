@@ -32,7 +32,7 @@
   <div class="space-y-4">
     <button
       class="w-full rounded bg-green-500 p-2 text-white hover:bg-green-600"
-      on:click={startNewGame}
+      onclick={startNewGame}
     >
       New Game
     </button>
@@ -51,7 +51,7 @@
       {/if}
       <button
         class="w-full rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
-        on:click={loadGame}
+        onclick={loadGame}
         disabled={!gameId || loading}
       >
         Load Game

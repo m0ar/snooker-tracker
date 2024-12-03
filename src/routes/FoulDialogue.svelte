@@ -1,10 +1,19 @@
 <script lang="ts">
   import { type SnookerStore } from '$lib/snooker-store';
   import { FOUL_POINTS } from '$lib/types';
-  const { store } = $props<{ store: SnookerStore }>();
+  const { store, onClose } = $props<{
+    store: SnookerStore;
+    onClose: () => void;
+  }>();
 
   let selectedPoints: (typeof FOUL_POINTS)[number] | null = $state(null);
   let lostBall = $state(false);
+  const handleFoul = () => {
+    if (selectedPoints) {
+      store.handleFoul(selectedPoints, lostBall);
+      onClose();
+    }
+  };
 </script>
 
 <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -35,15 +44,14 @@
       <button
         class="flex-1 rounded bg-red-500 p-2 text-white hover:bg-red-600"
         onclick={() => {
-          if (selectedPoints) store.handleFoul(selectedPoints, lostBall);
+          if (selectedPoints) {
+            handleFoul();
+          }
         }}
       >
         Confirm
       </button>
-      <button
-        class="flex-1 rounded bg-gray-500 p-2 text-white hover:bg-gray-600"
-        onclick={() => store.cancelFoul()}
-      >
+      <button class="flex-1 rounded bg-gray-500 p-2 text-white hover:bg-gray-600" onclick={onClose}>
         Cancel
       </button>
     </div>
