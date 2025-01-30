@@ -423,7 +423,7 @@ describe('snooker store', () => {
       expect(state.currentState.currentPlayer).toBe(0); // Player restored
     });
 
-    it.only('undoing a respot choice restores respot toss state', () => {
+    it('undoing a respot choice restores respot toss state', () => {
       const store = createSnookerStore({
         gameId: 'test',
         events: [
