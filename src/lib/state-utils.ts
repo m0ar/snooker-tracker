@@ -24,6 +24,7 @@ export const updateStateWithEvent = (
         currentPlayer: togglePlayer(state.currentPlayer),
         currentBreak: 0,
         onRed: state.redsRemaining > 0,
+        isFreeBall: false,
       } satisfies GameState;
 
     case 'FOUL': {
@@ -41,18 +42,21 @@ export const updateStateWithEvent = (
       newState.currentPlayer = togglePlayer(state.currentPlayer);
       newState.currentBreak = 0;
       newState.onRed = newState.redsRemaining > 0;
+      newState.isFreeBall = false;
       return newState satisfies GameState;
     }
 
     case 'RESPOT_TOSS':
       return {
         ...state,
+        isRespot: true,
         respotChoice: event.winner,
       } satisfies GameState;
 
     case 'RESPOT_CHOICE':
       return {
         ...state,
+        isRespot: true,
         currentPlayer: event.goFirst ? event.player : togglePlayer(event.player),
         respotChoice: undefined,
       } satisfies GameState;
@@ -62,6 +66,7 @@ export const updateStateWithEvent = (
 export const togglePlayer = (current: Player): Player => (current === 0 ? 1 : 0);
 export const validatePot = (state: GameState, color: ColorName): boolean => {
   const logCtx = { ...modLogCtx, fn: 'validatePot', params: { state, color } };
+
   // Check if trying to pot wrong ball type
   if (!state.onRed && color === 'red') {
     console.warn({ ...logCtx, wanted: 'colored' }, 'invalid pot');
@@ -74,13 +79,14 @@ export const validatePot = (state: GameState, color: ColorName): boolean => {
 
   // Check end game sequence
   const expectedColor = getColors().at(-state.colorsRemaining)![0];
-  if (state.redsRemaining === 0 && color !== expectedColor) {
+  if (state.redsRemaining === 0 && !state.isFreeBall && color !== expectedColor) {
     console.warn({ ...logCtx, wanted: expectedColor }, 'invalid pot');
     return false;
   }
 
   return true;
 };
+
 const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
   if (state.colorsRemaining > 0) return {};
 
@@ -103,7 +109,7 @@ export const updateStateWithPot = (
   points: number,
   player: Player,
 ): GameState => {
-  const newState = { ...state };
+  const newState = { ...state, isFreeBall: false };
   const isEndPhase = state.redsRemaining === 0;
 
   newState.scores[player] += points;
@@ -112,8 +118,14 @@ export const updateStateWithPot = (
   if (color === 'red') {
     newState.redsRemaining -= 1;
     newState.onRed = false;
+    const wasLastRed = newState.redsRemaining === 0;
+    if (wasLastRed) {
+      newState.isFreeBall = true;
+    }
   } else if (!isEndPhase) {
     newState.onRed = true;
+  } else if (state.isFreeBall) {
+    newState.onRed = false;
   } else {
     newState.colorsRemaining -= 1;
     newState.onRed = false;

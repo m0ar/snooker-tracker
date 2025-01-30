@@ -35,6 +35,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 14,
           colorsRemaining: 6,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -63,6 +64,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 14,
           colorsRemaining: 6,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -105,6 +107,7 @@ describe('snooker store', () => {
             onRed: true,
             redsRemaining: 1,
             colorsRemaining: 6,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -135,6 +138,7 @@ describe('snooker store', () => {
             onRed: true,
             redsRemaining: 1,
             colorsRemaining: 6,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -142,14 +146,15 @@ describe('snooker store', () => {
 
         store.handlePot('red', 1);
         store.handleFoul(7, false);
+
+        // Try invalid pot; no longer free ball
         store.handlePot('black', 7);
 
         const state = store.getState();
         expect(state.currentState.redsRemaining).toBe(0);
         expect(state.currentState.onRed).toBe(false);
         expect(state.currentState.colorsRemaining).toBe(6);
-        expect(state.currentState.scores[0]).toBe(1);
-        expect(state.currentState.scores[1]).toBe(0);
+        expect(state.currentState.scores).toEqual([1, 7]);
       });
 
       it('asserts potting a color after last red starts end game', () => {
@@ -165,6 +170,7 @@ describe('snooker store', () => {
             onRed: true,
             redsRemaining: 1,
             colorsRemaining: 6,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -195,6 +201,7 @@ describe('snooker store', () => {
             onRed: false,
             redsRemaining: 0,
             colorsRemaining: 6,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -220,6 +227,7 @@ describe('snooker store', () => {
             onRed: false,
             redsRemaining: 0,
             colorsRemaining: 6,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -248,6 +256,7 @@ describe('snooker store', () => {
             onRed: false,
             redsRemaining: 0,
             colorsRemaining: 1,
+            isFreeBall: false,
             isRespot: false,
             isOver: false,
           },
@@ -277,6 +286,7 @@ describe('snooker store', () => {
           onRed: true,
           redsRemaining: 3,
           colorsRemaining: 6,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -288,6 +298,7 @@ describe('snooker store', () => {
       expect(state.currentState.currentPlayer).toBe(1);
       expect(state.currentState.currentBreak).toBe(0);
       expect(state.currentState.onRed).toBe(true);
+      expect(state.currentState.isFreeBall).toBe(false);
     });
   });
 
@@ -305,6 +316,7 @@ describe('snooker store', () => {
           onRed: true,
           redsRemaining: 3,
           colorsRemaining: 6,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -317,6 +329,7 @@ describe('snooker store', () => {
       expect(state.currentState.currentPlayer).toBe(1);
       expect(state.currentState.currentBreak).toBe(0);
       expect(state.currentState.redsRemaining).toBe(2);
+      expect(state.currentState.isFreeBall).toBe(false);
     });
 
     it('handles foul on color in end game', () => {
@@ -332,6 +345,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 0,
           colorsRemaining: 3,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -360,6 +374,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 0,
           colorsRemaining: 1,
+          isFreeBall: false,
           isRespot: false,
           isOver: false,
         },
@@ -387,6 +402,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 0,
           colorsRemaining: 1,
+          isFreeBall: false,
           isRespot: true,
           isOver: false,
           respotChoice: 0,
@@ -413,6 +429,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 0,
           colorsRemaining: 1,
+          isFreeBall: false,
           isRespot: true,
           isOver: false,
           respotChoice: 0,
@@ -439,6 +456,7 @@ describe('snooker store', () => {
           onRed: false,
           redsRemaining: 0,
           colorsRemaining: 1,
+          isFreeBall: false,
           isRespot: true,
           isOver: false,
         },

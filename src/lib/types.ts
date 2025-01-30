@@ -5,6 +5,7 @@ export interface GameState {
   redsRemaining: number;
   colorsRemaining: number;
   currentBreak: number;
+  isFreeBall: boolean;
   isRespot: boolean;
   respotChoice?: Player;
   isOver: boolean;
