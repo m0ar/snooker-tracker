@@ -92,6 +92,96 @@ describe('snooker store', () => {
     });
 
     describe('end game sequence', () => {
+      it('asserts any color is on after last red is potted', () => {
+        const store = createSnookerStore(
+          {
+            gameId: 'test',
+            events: [],
+          },
+          {
+            currentPlayer: 0,
+            scores: [0, 0],
+            currentBreak: 0,
+            onRed: true,
+            redsRemaining: 1,
+            colorsRemaining: 6,
+            isRespot: false,
+            isOver: false,
+          },
+        );
+
+        store.handlePot('red', 1);
+        store.handlePot('black', 7);
+
+        const state = store.getState();
+        expect(state.currentState.redsRemaining).toBe(0);
+        expect(state.currentState.onRed).toBe(false);
+        expect(state.currentState.colorsRemaining).toBe(6);
+        expect(state.currentState.scores[0]).toBe(8);
+        expect(state.currentState.scores[1]).toBe(0);
+        expect(state.currentState.isOver).toBe(false);
+      });
+
+      it('prevents potting other than yellow after foul immediately after last red', () => {
+        const store = createSnookerStore(
+          {
+            gameId: 'test',
+            events: [],
+          },
+          {
+            currentPlayer: 0,
+            scores: [0, 0],
+            currentBreak: 0,
+            onRed: true,
+            redsRemaining: 1,
+            colorsRemaining: 6,
+            isRespot: false,
+            isOver: false,
+          },
+        );
+
+        store.handlePot('red', 1);
+        store.handleFoul(7, false);
+        store.handlePot('black', 7);
+
+        const state = store.getState();
+        expect(state.currentState.redsRemaining).toBe(0);
+        expect(state.currentState.onRed).toBe(false);
+        expect(state.currentState.colorsRemaining).toBe(6);
+        expect(state.currentState.scores[0]).toBe(1);
+        expect(state.currentState.scores[1]).toBe(0);
+      });
+
+      it('asserts potting a color after last red starts end game', () => {
+        const store = createSnookerStore(
+          {
+            gameId: 'test',
+            events: [],
+          },
+          {
+            currentPlayer: 0,
+            scores: [0, 0],
+            currentBreak: 0,
+            onRed: true,
+            redsRemaining: 1,
+            colorsRemaining: 6,
+            isRespot: false,
+            isOver: false,
+          },
+        );
+
+        store.handlePot('red', 1);
+        store.handlePot('black', 7);
+        store.handlePot('yellow', 2);
+
+        const state = store.getState();
+        expect(state.currentState.redsRemaining).toBe(0);
+        expect(state.currentState.colorsRemaining).toBe(5);
+        expect(state.currentState.scores[0]).toBe(10);
+        expect(state.currentState.currentPlayer).toBe(0);
+        expect(state.currentState.onRed).toBe(false);
+      });
+
       it('prevents potting wrong color (trying blue before yellow)', () => {
         const store = createSnookerStore(
           {
