@@ -9,7 +9,7 @@ export const modLogCtx = {
   module: 'snooker-store',
 };
 
-type Store = PersistedGame & {
+export type Store = PersistedGame & {
   currentState: GameState;
 };
 
@@ -31,6 +31,7 @@ export const createInitialState = (): GameState => ({
   redsRemaining: 15,
   colorsRemaining: 6,
   currentBreak: 0,
+  isFreeBall: false,
   isRespot: false,
   isOver: false,
 });
@@ -94,7 +95,7 @@ export const createSnookerStore = (
     handlePot: (color: ColorName, points: number) => {
       const logCtx = { ...modLogCtx, fn: 'handlePot', params: { color, points } };
 
-      update((store) => {
+      update((store: Store) => {
         if (!validatePot(store.currentState, color)) {
           console.debug({ ...logCtx, state: store }, 'invalid pot, state unchanged');
           return store;
@@ -114,7 +115,7 @@ export const createSnookerStore = (
     handleMiss: () => {
       // const logCtx = { ...modLogCtx, fn: 'handleMiss', params: {} };
 
-      update((store) => {
+      update((store: Store): Store => {
         const newEvent = {
           type: 'MISS' as const,
           player: store.currentState.currentPlayer,
@@ -127,7 +128,7 @@ export const createSnookerStore = (
     handleFoul: (points: FoulPoints, lostBall: boolean) => {
       // const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostBall } };
 
-      update((store) => {
+      update((store: Store): Store => {
         const newEvent = {
           type: 'FOUL' as const,
           player: store.currentState.currentPlayer,
@@ -142,7 +143,7 @@ export const createSnookerStore = (
     tossForRespot: () => {
       // const logCtx = { ...modLogCtx, fn: 'tossForRespot', params: {} };
 
-      update((store) => {
+      update((store: Store): Store => {
         const newEvent = {
           type: 'RESPOT_TOSS' as const,
           winner: Math.random() < 0.5 ? 0 : 1,
@@ -155,7 +156,7 @@ export const createSnookerStore = (
     chooseRespotTurn: (goFirst: boolean) => {
       const logCtx = { ...modLogCtx, fn: 'chooseRespotTurn', params: { goFirst } };
 
-      update((store) => {
+      update((store: Store): Store => {
         if (store.currentState.respotChoice === undefined) {
           console.debug({ ...logCtx, state: store }, 'needs respotChoice, state unchanged');
           return store;
@@ -184,7 +185,7 @@ export const createSnookerStore = (
     },
 
     undoLastEvent: () => {
-      update((store) => {
+      update((store: Store): Store => {
         const newEvents = store.events.slice(0, -1);
         return {
           ...store,
@@ -198,7 +199,7 @@ export const createSnookerStore = (
       });
     },
 
-    getState: () => currentStore,
+    getState: (): Store => currentStore,
   };
 
   return {
