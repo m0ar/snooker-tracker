@@ -40,15 +40,31 @@
 
   {#if game.isOver}
     <div class="mb-6 text-center">
-      <div class="text-2xl font-bold text-blue-600">Game Over!</div>
-      <div class="mt-2 text-xl">
-        Player {game.winner! + 1} wins!
+      <div class="text-3xl font-bold text-blue-600 mb-4">Game Over!</div>
+      <div class="bg-blue-50 rounded-lg p-4 shadow-outer mb-4">
+        <div class="text-2xl font-bold text-green-700">
+          🏆 Player {game.winner! + 1} wins! 🏆
+        </div>
       </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-2">Player 1</h3>
+          <div class="flex justify-between"><span>Highest Break:</span> <span class="font-mono">{game.highestBreaks?.[0] ?? 'N/A'}</span></div>
+          <div class="flex justify-between"><span>Longest Chain:</span> <span class="font-mono">{game.longestChains?.[0] ?? 'N/A'}</span></div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-2">Player 2</h3>
+          <div class="flex justify-between"><span>Highest Break:</span> <span class="font-mono">{game.highestBreaks?.[1] ?? 'N/A'}</span></div>
+          <div class="flex justify-between"><span>Longest Chain:</span> <span class="font-mono">{game.longestChains?.[1] ?? 'N/A'}</span></div>
+        </div>
+      </div>
+
       <button
-        class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        class="mt-4 rounded bg-green-500 px-4 py-3 text-white font-bold hover:bg-green-600 transform hover:scale-105 transition-all shadow-lg"
         onclick={() => store.resetGame()}
       >
-        New Game
+        Start New Game
       </button>
     </div>
   {:else}
