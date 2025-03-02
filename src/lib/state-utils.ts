@@ -46,11 +46,11 @@ export const updateStateWithEvent = (
       return newState satisfies GameState;
     }
 
-    case 'RESPOT_TOSS':
+    case 'RESPOT_TOSS_WINNER':
       return {
         ...state,
         isRespot: true,
-        respotChoice: event.winner,
+        respotChoice: event.player,
       } satisfies GameState;
 
     case 'RESPOT_CHOICE':
@@ -144,8 +144,8 @@ export const formatEvent = (event: GameEvent): string => {
       return `Player ${event.player + 1} misses`;
     case 'FOUL':
       return `Player ${event.player + 1} fouls (${event.points} points)`;
-    case 'RESPOT_TOSS':
-      return `Player ${event.winner + 1} wins respot toss`;
+    case 'RESPOT_TOSS_WINNER':
+      return `Player ${event.player + 1} wins respot toss`;
     case 'RESPOT_CHOICE':
       return `Player ${event.player + 1} chooses to go ${event.goFirst ? 'first' : 'second'}`;
     default:
