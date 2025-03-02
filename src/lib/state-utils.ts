@@ -1,4 +1,4 @@
-import { createInitialState, modLogCtx } from './snooker-store';
+import { createInitialState, modLogCtx, type Store } from './snooker-store';
 import { colors } from './types';
 import type { Player, ColorName, Color, GameState, GameEvent } from './types';
 import { exhaustiveAssert } from './util';
@@ -101,6 +101,47 @@ const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
     isOver: true,
     winner: state.scores[0] > state.scores[1] ? 0 : 1,
   };
+};
+
+export const updateStoreWithEvent = (store: Store, newEvent: GameEvent): Store => {
+  const newStore = {
+    ...store,
+    events: [...store.events, newEvent],
+    currentState: updateStateWithEvent(newEvent, store.currentState),
+  };
+  if (newStore.currentState.isOver) {
+    newStore.currentState = addEndGameStatsToState(newStore);
+  }
+
+  return newStore;
+};
+
+const addEndGameStatsToState = (store: {
+  currentState: GameState;
+  events: GameEvent[];
+}): GameState => {
+  const state = store.currentState;
+  const newState = { ...state };
+  const longestChains = [0, 0];
+  const highestBreaks = [0, 0];
+  let currentChain = 0;
+  let currentBreak = 0;
+
+  for (const event of store.events) {
+    if (event.type === 'POT') {
+      currentChain += 1;
+      currentBreak += event.points;
+    } else {
+      longestChains[event.player] = Math.max(longestChains[event.player], currentChain);
+      highestBreaks[event.player] = Math.max(highestBreaks[event.player], currentBreak);
+      currentChain = 0;
+      currentBreak = 0;
+    }
+  }
+
+  newState.longestChains = [longestChains[0], longestChains[1]];
+  newState.highestBreaks = [highestBreaks[0], highestBreaks[1]];
+  return newState;
 };
 
 export const updateStateWithPot = (

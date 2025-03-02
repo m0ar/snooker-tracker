@@ -1,7 +1,7 @@
 import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
 import type { ColorName, GameState, FoulPoints, GameEvent, PersistedGame, Player } from './types';
-import { updateStateWithEvent, validatePot } from './state-utils';
+import { updateStateWithEvent, updateStoreWithEvent, validatePot } from './state-utils';
 import { writeRemoteState } from './api';
 import { pushState } from '$app/navigation';
 
@@ -83,12 +83,7 @@ export const createSnookerStore = (
       timestamp: Date.now(),
       sequenceNumber: store.events.length,
     } as GameEvent;
-
-    return {
-      ...store,
-      events: [...store.events, newEvent],
-      currentState: updateStateWithEvent(newEvent, store.currentState),
-    };
+    return updateStoreWithEvent(store, newEvent);
   };
 
   const actions = {
