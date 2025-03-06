@@ -537,8 +537,8 @@ describe('snooker store', () => {
         events: [
           ...makeTie(),
           {
-            type: 'RESPOT_TOSS',
-            winner: 0,
+            type: 'RESPOT_TOSS_WINNER',
+            player: 0,
             timestamp: 300,
             sequenceNumber: 37,
           },

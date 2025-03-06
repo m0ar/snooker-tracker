@@ -10,6 +10,8 @@ export interface GameState {
   respotChoice?: Player;
   isOver: boolean;
   winner?: Player;
+  longestBreaks?: [number, number];
+  highestBreaks?: [number, number];
 }
 
 export interface PersistedGame {
@@ -21,12 +23,13 @@ export interface PersistedGame {
 export type GameEvent = {
   timestamp: number;
   sequenceNumber: number; // Prevent race conditions/ordering issues
+  player: Player;
 } & (
-  | { type: 'POT'; player: Player; color: ColorName; points: number }
-  | { type: 'MISS'; player: Player }
-  | { type: 'FOUL'; player: Player; points: FoulPoints; lostBall: boolean }
-  | { type: 'RESPOT_TOSS'; winner: Player }
-  | { type: 'RESPOT_CHOICE'; player: Player; goFirst: boolean }
+  | { type: 'POT'; color: ColorName; points: number }
+  | { type: 'MISS' }
+  | { type: 'FOUL'; points: FoulPoints; lostBall: boolean }
+  | { type: 'RESPOT_TOSS_WINNER' }
+  | { type: 'RESPOT_CHOICE'; goFirst: boolean }
 );
 
 export type ColorName = 'red' | 'yellow' | 'green' | 'brown' | 'blue' | 'pink' | 'black';

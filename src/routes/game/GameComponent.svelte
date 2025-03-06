@@ -7,6 +7,8 @@
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
   import EventList from '../EventList.svelte';
+  import CopyableGameId from '../CopyableGameId.svelte';
+  import PlayerInfo from '../PlayerInfo.svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
@@ -23,32 +25,46 @@
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
   <div class="mb-6 flex justify-between">
+    <PlayerInfo playerId={0} isPlaying={game.currentPlayer === 0} score={game.scores[0]} />
     <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={game.currentPlayer === 0}>Player 1</div>
-      <div class="text-3xl">{game.scores[0]}</div>
-    </div>
-    <div class="text-center">
-      <div>{$store.gameId}</div>
       <div>Current Break</div>
       <div class="text-2xl">{game.currentBreak}</div>
     </div>
-    <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={game.currentPlayer === 1}>Player 2</div>
-      <div class="text-3xl">{game.scores[1]}</div>
-    </div>
+    <PlayerInfo playerId={1} isPlaying={game.currentPlayer === 1} score={game.scores[1]} />
   </div>
 
   {#if game.isOver}
     <div class="mb-6 text-center">
-      <div class="text-2xl font-bold text-blue-600">Game Over!</div>
-      <div class="mt-2 text-xl">
-        Player {game.winner! + 1} wins!
+      <div class="mb-4 text-3xl font-bold text-blue-600">Game Over!</div>
+      <div class="shadow-outer mb-4 rounded-lg bg-blue-50 p-4">
+        <div class="text-2xl font-bold text-green-700">
+          🏆 Player {game.winner! + 1} wins! 🏆
+        </div>
       </div>
+
+      <div class="mb-4 grid grid-cols-2 gap-4">
+        {#each [0, 1] as player}
+          <div class="rounded-lg bg-gray-50 p-3 shadow-sm">
+            <h3 class="mb-2 border-b pb-1 text-lg font-semibold text-gray-800">
+              Player {player + 1}
+            </h3>
+            <div class="flex justify-between">
+              <span>Highest break:</span>
+              <span class="font-mono">{game.highestBreaks?.[player] ?? 'N/A'}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Longest chain:</span>
+              <span class="font-mono">{game.longestBreaks?.[player] ?? 'N/A'}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+
       <button
-        class="mt-4 rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        class="mt-4 transform rounded bg-green-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
         onclick={() => store.resetGame()}
       >
-        New Game
+        Start New Game
       </button>
     </div>
   {:else}
@@ -113,13 +129,13 @@
       <!-- Miss/Foul buttons -->
       <div class="grid grid-cols-2 gap-2">
         <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          class="rounded bg-gray-500 p-3 text-white hover:bg-gray-600"
           onclick={() => store.handleMiss()}
         >
           Miss
         </button>
         <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          class="rounded bg-red-500 p-3 text-white hover:bg-red-600"
           onclick={() => {
             showFoulDialog = true;
           }}
@@ -131,6 +147,7 @@
 
     <EventList events={$store.events} onUndo={store.undoLastEvent} />
   {/if}
+  <CopyableGameId gameId={$store.gameId} />
 </div>
 
 {#if showFoulDialog}

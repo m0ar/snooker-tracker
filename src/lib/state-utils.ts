@@ -1,4 +1,4 @@
-import { createInitialState, modLogCtx } from './snooker-store';
+import { createInitialState, modLogCtx, type Store } from './snooker-store';
 import { colors } from './types';
 import type { Player, ColorName, Color, GameState, GameEvent } from './types';
 import { exhaustiveAssert } from './util';
@@ -46,11 +46,11 @@ export const updateStateWithEvent = (
       return newState satisfies GameState;
     }
 
-    case 'RESPOT_TOSS':
+    case 'RESPOT_TOSS_WINNER':
       return {
         ...state,
         isRespot: true,
-        respotChoice: event.winner,
+        respotChoice: event.player,
       } satisfies GameState;
 
     case 'RESPOT_CHOICE':
@@ -103,6 +103,54 @@ const maybeHandleGameEnd = (state: GameState): Partial<GameState> => {
   };
 };
 
+export const updateStoreWithEvent = (store: Store, newEvent: GameEvent): Store => {
+  const newStore = {
+    ...store,
+    events: [...store.events, newEvent],
+    currentState: updateStateWithEvent(newEvent, store.currentState),
+  };
+  if (newStore.currentState.isOver) {
+    newStore.currentState = addEndGameStatsToState(newStore);
+  }
+
+  return newStore;
+};
+
+const addEndGameStatsToState = (store: {
+  currentState: GameState;
+  events: GameEvent[];
+}): GameState => {
+  const state = store.currentState;
+  const newState = { ...state };
+  const longestBreaks = [0, 0];
+  const highestBreaks = [0, 0];
+  let currentBreakLength = 0;
+  let currentBreakScore = 0;
+
+  for (const event of store.events) {
+    if (event.type === 'POT') {
+      currentBreakLength += 1;
+      currentBreakScore += event.points;
+    } else {
+      longestBreaks[event.player] = Math.max(longestBreaks[event.player], currentBreakLength);
+      highestBreaks[event.player] = Math.max(highestBreaks[event.player], currentBreakScore);
+      currentBreakLength = 0;
+      currentBreakScore = 0;
+    }
+  }
+
+  // Tally up the last break if we ended with a pot, as the loop only does so on non-pot events
+  const lastEvent = store.events.at(-1);
+  if (lastEvent?.type === 'POT') {
+    longestBreaks[lastEvent.player] = Math.max(longestBreaks[lastEvent.player], currentBreakLength);
+    highestBreaks[lastEvent.player] = Math.max(highestBreaks[lastEvent.player], currentBreakScore);
+  }
+
+  newState.longestBreaks = [longestBreaks[0], longestBreaks[1]];
+  newState.highestBreaks = [highestBreaks[0], highestBreaks[1]];
+  return newState;
+};
+
 export const updateStateWithPot = (
   state: GameState,
   color: ColorName,
@@ -144,8 +192,8 @@ export const formatEvent = (event: GameEvent): string => {
       return `Player ${event.player + 1} misses`;
     case 'FOUL':
       return `Player ${event.player + 1} fouls (${event.points} points)`;
-    case 'RESPOT_TOSS':
-      return `Player ${event.winner + 1} wins respot toss`;
+    case 'RESPOT_TOSS_WINNER':
+      return `Player ${event.player + 1} wins respot toss`;
     case 'RESPOT_CHOICE':
       return `Player ${event.player + 1} chooses to go ${event.goFirst ? 'first' : 'second'}`;
     default:
