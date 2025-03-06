@@ -7,6 +7,7 @@
   import { replaceState } from '$app/navigation';
   import { page } from '$app/stores';
   import EventList from '../EventList.svelte';
+  import CopyableGameId from '../CopyableGameId.svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
@@ -28,7 +29,7 @@
       <div class="text-3xl">{game.scores[0]}</div>
     </div>
     <div class="text-center">
-      <div>{$store.gameId}</div>
+      <CopyableGameId gameId={$store.gameId} />
       <div>Current Break</div>
       <div class="text-2xl">{game.currentBreak}</div>
     </div>
