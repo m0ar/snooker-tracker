@@ -8,6 +8,7 @@
   import { page } from '$app/stores';
   import EventList from '../EventList.svelte';
   import CopyableGameId from '../CopyableGameId.svelte';
+  import PlayerInfo from '../PlayerInfo.svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
@@ -24,19 +25,12 @@
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
   <div class="mb-6 flex justify-between">
+    <PlayerInfo playerId={0} isPlaying={game.currentPlayer === 0} score={game.scores[0]} />
     <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={game.currentPlayer === 0}>Player 1</div>
-      <div class="text-3xl">{game.scores[0]}</div>
-    </div>
-    <div class="text-center">
-      <CopyableGameId gameId={$store.gameId} />
       <div>Current Break</div>
       <div class="text-2xl">{game.currentBreak}</div>
     </div>
-    <div class="text-center">
-      <div class="text-xl font-bold" class:text-blue-600={game.currentPlayer === 1}>Player 2</div>
-      <div class="text-3xl">{game.scores[1]}</div>
-    </div>
+    <PlayerInfo playerId={1} isPlaying={game.currentPlayer === 1} score={game.scores[1]} />
   </div>
 
   {#if game.isOver}
@@ -153,6 +147,7 @@
 
     <EventList events={$store.events} onUndo={store.undoLastEvent} />
   {/if}
+  <CopyableGameId gameId={$store.gameId} />
 </div>
 
 {#if showFoulDialog}
