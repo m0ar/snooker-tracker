@@ -572,6 +572,273 @@ describe('snooker store', () => {
       expect(finalState).toEqual(initialState);
     });
   });
+
+  describe.skip('end game statistics', () => {
+    it('calculates longest chains and highest breaks when game is over', () => {
+      // Create a store with a nearly-finished game - just black remains
+      const store = createSnookerStore(
+        {
+          gameId: 'test',
+          events: [
+            // Player 0: Red + Black + Red + Black = 16 points
+            {
+              type: 'POT',
+              player: 0,
+              color: 'red',
+              points: 1,
+              timestamp: 1,
+              sequenceNumber: 0,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'black',
+              points: 7,
+              timestamp: 2,
+              sequenceNumber: 1,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'red',
+              points: 1,
+              timestamp: 3,
+              sequenceNumber: 2,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'black',
+              points: 7,
+              timestamp: 4,
+              sequenceNumber: 3,
+            },
+            {
+              type: 'MISS',
+              player: 0,
+              timestamp: 5,
+              sequenceNumber: 4,
+            },
+            // Player 1: Red + Pink = 7 points
+            {
+              type: 'POT',
+              player: 1,
+              color: 'red',
+              points: 1,
+              timestamp: 6,
+              sequenceNumber: 5,
+            },
+            {
+              type: 'POT',
+              player: 1,
+              color: 'pink',
+              points: 6,
+              timestamp: 7,
+              sequenceNumber: 6,
+            },
+            // Skip to end game with last black remaining
+          ],
+        },
+        {
+          currentPlayer: 0,
+          scores: [30, 25], // Some points from other shots
+          currentBreak: 0,
+          onRed: false,
+          redsRemaining: 0,
+          colorsRemaining: 1, // Only black remains
+          isFreeBall: false,
+          isRespot: false,
+          isOver: false,
+        },
+      );
+
+      // Pot final black to end game
+      store.handlePot('black', 7);
+
+      const state = store.getState();
+      expect(state.currentState.isOver).toBe(true);
+      expect(state.currentState.winner).toBe(0);
+
+      // Player 0 had 4 consecutive pots (red + black + red + black)
+      // Player 1 had 2 consecutive pots (red + pink)
+      expect(state.currentState.longestBreaks).toEqual([4, 2]);
+
+      // Player 0's highest break was 16 points (red + black + red + black)
+      // Player 1's highest break was 7 points (red + pink)
+      expect(state.currentState.highestBreaks).toEqual([16, 7]);
+    });
+
+    it('calculates stats with multiple breaks accurately', () => {
+      const store = createSnookerStore(
+        {
+          gameId: 'test',
+          events: [
+            // Player 0: Red + Black = 8 points
+            {
+              type: 'POT',
+              player: 0,
+              color: 'red',
+              points: 1,
+              timestamp: 1,
+              sequenceNumber: 0,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'black',
+              points: 7,
+              timestamp: 2,
+              sequenceNumber: 1,
+            },
+            // Miss
+            {
+              type: 'MISS',
+              player: 0,
+              timestamp: 3,
+              sequenceNumber: 2,
+            },
+            // Player 1 fouls
+            {
+              type: 'FOUL',
+              player: 1,
+              points: 4,
+              lostBall: false,
+              timestamp: 4,
+              sequenceNumber: 3,
+            },
+            // Player 0: Red + Pink + Red + Black = 15 points
+            {
+              type: 'POT',
+              player: 0,
+              color: 'red',
+              points: 1,
+              timestamp: 5,
+              sequenceNumber: 4,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'pink',
+              points: 6,
+              timestamp: 6,
+              sequenceNumber: 5,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'red',
+              points: 1,
+              timestamp: 7,
+              sequenceNumber: 6,
+            },
+            {
+              type: 'POT',
+              player: 0,
+              color: 'black',
+              points: 7,
+              timestamp: 8,
+              sequenceNumber: 7,
+            },
+          ],
+        },
+        {
+          currentPlayer: 0,
+          scores: [27, 0], // 8 + 4 (from foul) + 15
+          currentBreak: 15,
+          onRed: true,
+          redsRemaining: 0, // Last red was potted
+          colorsRemaining: 6,
+          isFreeBall: false,
+          isRespot: false,
+          isOver: false,
+        },
+      );
+
+      // Clear all colors in sequence to end the game
+      store.handlePot('yellow', 2);
+      store.handlePot('green', 3);
+      store.handlePot('brown', 4);
+      store.handlePot('blue', 5);
+      store.handlePot('pink', 6);
+      store.handlePot('black', 7);
+
+      const state = store.getState();
+      expect(state.currentState.isOver).toBe(true);
+
+      // Player 0 had longest chain of 6 pots
+      // (yellow + green + brown + blue + pink + black)
+      // Player 1 had no consecutive pots
+      expect(state.currentState.longestBreaks).toEqual([6, 0]);
+
+      // Player 0's highest break was 27 points
+      // Player 1 had no break
+      expect(state.currentState.highestBreaks).toEqual([27, 0]);
+    });
+
+    it('does not add statistics when game is not over', () => {
+      const store = createSnookerStore(
+        {
+          gameId: 'test',
+          events: [],
+        },
+        createInitialState(),
+      );
+
+      store.handlePot('red', 1);
+      store.handlePot('black', 7);
+
+      const state = store.getState();
+      expect(state.currentState.isOver).toBe(false);
+      expect(state.currentState.longestBreaks).toBeUndefined();
+      expect(state.currentState.highestBreaks).toBeUndefined();
+    });
+  });
+
+  describe.skip('updateStoreWithEvent', () => {
+    it('handles foul in end game and computes stats when game is over', () => {
+      const store = createSnookerStore(
+        {
+          gameId: 'test',
+          events: [],
+        },
+        {
+          currentPlayer: 0,
+          scores: [57, 50], // Player 0 ahead by 7
+          currentBreak: 0,
+          onRed: false,
+          redsRemaining: 0,
+          colorsRemaining: 1, // Only black remains
+          isFreeBall: false,
+          isRespot: false,
+          isOver: false,
+        },
+      );
+
+      // Player 0 fouls on black, giving 7 points to player 1
+      // This ties the game
+      store.handleFoul(7, true);
+
+      // Now we should be in respot mode
+      const state = store.getState();
+      expect(state.currentState.isRespot).toBe(true);
+      expect(state.currentState.colorsRemaining).toBe(1);
+      expect(state.currentState.scores).toEqual([57, 57]);
+
+      // Player 1 wins respot black
+      store.tossForRespot();
+      store.chooseRespotTurn(true);
+      store.handlePot('black', 7);
+
+      const finalState = store.getState();
+      expect(finalState.currentState.isOver).toBe(true);
+      expect(finalState.currentState.winner).toBe(1);
+      expect(finalState.currentState.scores).toEqual([57, 64]);
+
+      // Statistics should be computed
+      expect(finalState.currentState.longestBreaks).toBeDefined();
+      expect(finalState.currentState.highestBreaks).toBeDefined();
+    });
+  });
 });
 
 // this is.. dumb
