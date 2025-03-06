@@ -10,7 +10,7 @@ export interface GameState {
   respotChoice?: Player;
   isOver: boolean;
   winner?: Player;
-  longestChains?: [number, number];
+  longestBreaks?: [number, number];
   highestBreaks?: [number, number];
 }
 

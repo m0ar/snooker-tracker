@@ -122,24 +122,31 @@ const addEndGameStatsToState = (store: {
 }): GameState => {
   const state = store.currentState;
   const newState = { ...state };
-  const longestChains = [0, 0];
+  const longestBreaks = [0, 0];
   const highestBreaks = [0, 0];
-  let currentChain = 0;
-  let currentBreak = 0;
+  let currentBreakLength = 0;
+  let currentBreakScore = 0;
 
   for (const event of store.events) {
     if (event.type === 'POT') {
-      currentChain += 1;
-      currentBreak += event.points;
+      currentBreakLength += 1;
+      currentBreakScore += event.points;
     } else {
-      longestChains[event.player] = Math.max(longestChains[event.player], currentChain);
-      highestBreaks[event.player] = Math.max(highestBreaks[event.player], currentBreak);
-      currentChain = 0;
-      currentBreak = 0;
+      longestBreaks[event.player] = Math.max(longestBreaks[event.player], currentBreakLength);
+      highestBreaks[event.player] = Math.max(highestBreaks[event.player], currentBreakScore);
+      currentBreakLength = 0;
+      currentBreakScore = 0;
     }
   }
 
-  newState.longestChains = [longestChains[0], longestChains[1]];
+  // Tally up the last break if we ended with a pot, as the loop only does so on non-pot events
+  const lastEvent = store.events.at(-1);
+  if (lastEvent?.type === 'POT') {
+    longestBreaks[lastEvent.player] = Math.max(longestBreaks[lastEvent.player], currentBreakLength);
+    highestBreaks[lastEvent.player] = Math.max(highestBreaks[lastEvent.player], currentBreakScore);
+  }
+
+  newState.longestBreaks = [longestBreaks[0], longestBreaks[1]];
   newState.highestBreaks = [highestBreaks[0], highestBreaks[1]];
   return newState;
 };

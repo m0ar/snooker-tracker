@@ -40,28 +40,33 @@
 
   {#if game.isOver}
     <div class="mb-6 text-center">
-      <div class="text-3xl font-bold text-blue-600 mb-4">Game Over!</div>
-      <div class="bg-blue-50 rounded-lg p-4 shadow-outer mb-4">
+      <div class="mb-4 text-3xl font-bold text-blue-600">Game Over!</div>
+      <div class="shadow-outer mb-4 rounded-lg bg-blue-50 p-4">
         <div class="text-2xl font-bold text-green-700">
           🏆 Player {game.winner! + 1} wins! 🏆
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
-          <h3 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-2">Player 1</h3>
-          <div class="flex justify-between"><span>Highest Break:</span> <span class="font-mono">{game.highestBreaks?.[0] ?? 'N/A'}</span></div>
-          <div class="flex justify-between"><span>Longest Chain:</span> <span class="font-mono">{game.longestChains?.[0] ?? 'N/A'}</span></div>
-        </div>
-        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
-          <h3 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-2">Player 2</h3>
-          <div class="flex justify-between"><span>Highest Break:</span> <span class="font-mono">{game.highestBreaks?.[1] ?? 'N/A'}</span></div>
-          <div class="flex justify-between"><span>Longest Chain:</span> <span class="font-mono">{game.longestChains?.[1] ?? 'N/A'}</span></div>
-        </div>
+      <div class="mb-4 grid grid-cols-2 gap-4">
+        {#each [0, 1] as player}
+          <div class="rounded-lg bg-gray-50 p-3 shadow-sm">
+            <h3 class="mb-2 border-b pb-1 text-lg font-semibold text-gray-800">
+              Player {player + 1}
+            </h3>
+            <div class="flex justify-between">
+              <span>Highest break:</span>
+              <span class="font-mono">{game.highestBreaks?.[player] ?? 'N/A'}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Longest chain:</span>
+              <span class="font-mono">{game.longestBreaks?.[player] ?? 'N/A'}</span>
+            </div>
+          </div>
+        {/each}
       </div>
 
       <button
-        class="mt-4 rounded bg-green-500 px-4 py-3 text-white font-bold hover:bg-green-600 transform hover:scale-105 transition-all shadow-lg"
+        class="mt-4 transform rounded bg-green-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
         onclick={() => store.resetGame()}
       >
         Start New Game
