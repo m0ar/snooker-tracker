@@ -129,13 +129,13 @@
       <!-- Miss/Foul buttons -->
       <div class="grid grid-cols-2 gap-2">
         <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          class="rounded bg-gray-500 p-3 text-white hover:bg-gray-600"
           onclick={() => store.handleMiss()}
         >
           Miss
         </button>
         <button
-          class="rounded bg-red-500 p-2 text-white hover:bg-red-600"
+          class="rounded bg-red-500 p-3 text-white hover:bg-red-600"
           onclick={() => {
             showFoulDialog = true;
           }}
