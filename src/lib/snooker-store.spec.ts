@@ -355,7 +355,8 @@ describe('snooker store', () => {
 
       const state = store.getState();
       expect(state.currentState.scores).toEqual([20, 20]);
-      expect(state.currentState.colorsRemaining).toBe(2);
+      // Colored balls are never lost during fouls - they're always respotted
+      expect(state.currentState.colorsRemaining).toBe(3);
       expect(state.currentState.currentPlayer).toBe(1);
     });
 
