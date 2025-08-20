@@ -116,7 +116,7 @@ export const updateStoreWithEvent = (store: Store, newEvent: GameEvent): Store =
   return newStore;
 };
 
-const addEndGameStatsToState = (store: {
+export const addEndGameStatsToState = (store: {
   currentState: GameState;
   events: GameEvent[];
 }): GameState => {

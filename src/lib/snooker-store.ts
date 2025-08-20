@@ -1,7 +1,12 @@
 import { createLongNameId } from 'mnemonic-id';
 import { writable, type Writable } from 'svelte/store';
 import type { ColorName, GameState, FoulPoints, GameEvent, PersistedGame, Player } from './types';
-import { updateStateWithEvent, updateStoreWithEvent, validatePot } from './state-utils';
+import {
+  updateStateWithEvent,
+  updateStoreWithEvent,
+  validatePot,
+  addEndGameStatsToState,
+} from './state-utils';
 import { writeRemoteState } from './api';
 import { pushState } from '$app/navigation';
 
@@ -53,6 +58,11 @@ export const createSnookerStore = (
       (state, event) => updateStateWithEvent(event, state),
       createInitialState(),
     );
+    // Add end game stats if the game is over but stats aren't calculated yet
+    if (currentState.isOver && !currentState.highestBreaks) {
+      const tempStore = { currentState, events: initial.events };
+      currentState = addEndGameStatsToState(tempStore);
+    }
   }
 
   const { subscribe, set, update } = writable({
@@ -182,14 +192,19 @@ export const createSnookerStore = (
     undoLastEvent: () => {
       update((store: Store): Store => {
         const newEvents = store.events.slice(0, -1);
+        let newState = newEvents.reduce(
+          (state, event) => updateStateWithEvent(event, state),
+          createInitialState(),
+        );
+        // Add end game stats if the game is over but stats aren't calculated yet
+        if (newState.isOver && !newState.highestBreaks) {
+          const tempStore = { currentState: newState, events: newEvents };
+          newState = addEndGameStatsToState(tempStore);
+        }
         return {
           ...store,
           events: newEvents,
-          // Recompute game state from events
-          currentState: newEvents.reduce(
-            (state, event) => updateStateWithEvent(event, state),
-            createInitialState(),
-          ),
+          currentState: newState,
         };
       });
     },
