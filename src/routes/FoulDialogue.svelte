@@ -8,9 +8,10 @@
 
   let selectedPoints: (typeof FOUL_POINTS)[number] | null = $state(null);
   let lostBall = $state(false);
+  let retakeShot = $state(false);
   const handleFoul = () => {
     if (selectedPoints) {
-      store.handleFoul(selectedPoints, lostBall);
+      store.handleFoul(selectedPoints, lostBall, retakeShot);
       onClose();
     }
   };
@@ -39,6 +40,11 @@
         <span>{$store.onRed ? 'Red' : 'Color'} was lost</span>
       </label>
     {/if}
+
+    <label class="mb-4 flex items-center gap-2">
+      <input type="checkbox" class="h-4 w-4" bind:checked={retakeShot} />
+      <span>Retake shot (player snookered)</span>
+    </label>
 
     <div class="flex gap-2">
       <button

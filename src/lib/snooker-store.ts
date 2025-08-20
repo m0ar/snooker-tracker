@@ -21,7 +21,7 @@ export type Store = PersistedGame & {
 export interface SnookerStore extends Writable<Store> {
   handlePot: (color: ColorName, points: number) => void;
   handleMiss: () => void;
-  handleFoul: (points: FoulPoints, lostCurrentBall: boolean) => void;
+  handleFoul: (points: FoulPoints, lostCurrentBall: boolean, retakeShot: boolean) => void;
   tossForRespot: () => void;
   chooseRespotTurn: (goesFirst: boolean) => void;
   resetGame: () => void;
@@ -130,8 +130,8 @@ export const createSnookerStore = (
       });
     },
 
-    handleFoul: (points: FoulPoints, lostBall: boolean) => {
-      // const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostBall } };
+    handleFoul: (points: FoulPoints, lostBall: boolean, retakeShot: boolean) => {
+      // const logCtx = { ...modLogCtx, fn: 'handleFoul', params: { points, lostBall, retakeShot } };
 
       update((store: Store): Store => {
         const newEvent = {
@@ -139,6 +139,7 @@ export const createSnookerStore = (
           player: store.currentState.currentPlayer,
           points,
           lostBall,
+          retakeShot,
         };
 
         return appendEvent(store, newEvent);

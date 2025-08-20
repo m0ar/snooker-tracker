@@ -145,7 +145,7 @@ describe('snooker store', () => {
         );
 
         store.handlePot('red', 1);
-        store.handleFoul(7, false);
+        store.handleFoul(7, false, false);
 
         // Try invalid pot; no longer free ball
         store.handlePot('black', 7);
@@ -322,7 +322,7 @@ describe('snooker store', () => {
         },
       );
 
-      store.handleFoul(4, true);
+      store.handleFoul(4, true, false);
 
       const state = store.getState();
       expect(state.currentState.scores).toEqual([10, 9]);
@@ -351,12 +351,39 @@ describe('snooker store', () => {
         },
       );
 
-      store.handleFoul(5, true);
+      store.handleFoul(5, true, false);
 
       const state = store.getState();
       expect(state.currentState.scores).toEqual([20, 20]);
       expect(state.currentState.colorsRemaining).toBe(2);
       expect(state.currentState.currentPlayer).toBe(1);
+    });
+
+    it('retake shot keeps same player after foul', () => {
+      const store = createSnookerStore(
+        {
+          gameId: 'test',
+          events: [],
+        },
+        {
+          currentPlayer: 0,
+          scores: [10, 5],
+          currentBreak: 5,
+          onRed: true,
+          redsRemaining: 10,
+          colorsRemaining: 6,
+          isFreeBall: false,
+          isRespot: false,
+          isOver: false,
+        },
+      );
+
+      store.handleFoul(4, false, true); // Retake shot scenario
+
+      const state = store.getState();
+      expect(state.currentState.scores).toEqual([10, 9]); // Opponent gets points
+      expect(state.currentState.currentPlayer).toBe(0); // Same player continues (retake)
+      expect(state.currentState.currentBreak).toBe(0); // Break ends
     });
   });
 
@@ -522,7 +549,7 @@ describe('snooker store', () => {
         ],
       });
 
-      store.handleFoul(4, true); // 4 points to opponent, loses a red
+      store.handleFoul(4, true, false); // 4 points to opponent, loses a red
       store.undoLastEvent();
 
       const state = store.getState();
