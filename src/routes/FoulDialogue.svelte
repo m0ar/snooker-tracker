@@ -34,16 +34,16 @@
       {/each}
     </div>
 
-    {#if $store.onRed || $store.redsRemaining === 0}
+    {#if $store.currentState.redsRemaining > 0}
       <label class="mb-4 flex items-center gap-2">
         <input type="checkbox" class="h-4 w-4" bind:checked={lostBall} />
-        <span>{$store.onRed ? 'Red' : 'Color'} was lost</span>
+        <span>Lost red ball</span>
       </label>
     {/if}
 
     <label class="mb-4 flex items-center gap-2">
       <input type="checkbox" class="h-4 w-4" bind:checked={retakeShot} />
-      <span>Retake shot (player snookered)</span>
+      <span>Retake shot</span>
     </label>
 
     <div class="flex gap-2">

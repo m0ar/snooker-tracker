@@ -32,10 +32,11 @@ export const updateStateWithEvent = (
       newState.scores[togglePlayer(state.currentPlayer)] += event.points;
 
       if (event.lostBall) {
-        if (newState.onRed) {
+        // Handle ball loss during foul:
+        // Only red balls are not respotted when potted during a foul
+        // Colored balls are always respotted, so they should never be "lost"
+        if (newState.redsRemaining > 0) {
           newState.redsRemaining -= 1;
-        } else {
-          newState.colorsRemaining -= 1;
         }
       }
 
