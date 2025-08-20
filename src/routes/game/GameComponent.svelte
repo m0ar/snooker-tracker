@@ -60,12 +60,21 @@
         {/each}
       </div>
 
-      <button
-        class="mt-4 transform rounded bg-green-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
-        onclick={() => store.resetGame()}
-      >
-        Start New Game
-      </button>
+      <div class="mt-4 flex gap-2">
+        <button
+          class="flex-1 transform rounded bg-gray-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-gray-600"
+          onclick={() => store.undoLastEvent()}
+          disabled={$store.events.length === 0}
+        >
+          Undo Last Action
+        </button>
+        <button
+          class="flex-1 transform rounded bg-green-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
+          onclick={() => store.resetGame()}
+        >
+          Start New Game
+        </button>
+      </div>
     </div>
   {:else}
     <div class="mb-4 text-center">
