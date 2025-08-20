@@ -27,7 +27,7 @@ export type GameEvent = {
 } & (
   | { type: 'POT'; color: ColorName; points: number }
   | { type: 'MISS' }
-  | { type: 'FOUL'; points: FoulPoints; lostBall: boolean }
+  | { type: 'FOUL'; points: FoulPoints; lostBall: boolean; retakeShot: boolean }
   | { type: 'RESPOT_TOSS_WINNER' }
   | { type: 'RESPOT_CHOICE'; goFirst: boolean }
 );

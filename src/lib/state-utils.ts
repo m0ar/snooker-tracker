@@ -39,7 +39,11 @@ export const updateStateWithEvent = (
         }
       }
 
-      newState.currentPlayer = togglePlayer(state.currentPlayer);
+      // If retakeShot is true, the current player remains the same (snookered scenario)
+      // Otherwise, switch to the other player as normal
+      newState.currentPlayer = event.retakeShot
+        ? state.currentPlayer
+        : togglePlayer(state.currentPlayer);
       newState.currentBreak = 0;
       newState.onRed = newState.redsRemaining > 0;
       newState.isFreeBall = false;
@@ -191,7 +195,7 @@ export const formatEvent = (event: GameEvent): string => {
     case 'MISS':
       return `Player ${event.player + 1} misses`;
     case 'FOUL':
-      return `Player ${event.player + 1} fouls (${event.points} points)`;
+      return `Player ${event.player + 1} fouls (${event.points} points)${event.retakeShot ? ' - retakes shot' : ''}`;
     case 'RESPOT_TOSS_WINNER':
       return `Player ${event.player + 1} wins respot toss`;
     case 'RESPOT_CHOICE':
