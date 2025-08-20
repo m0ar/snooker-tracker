@@ -9,6 +9,7 @@
   import EventList from '../EventList.svelte';
   import CopyableGameId from '../CopyableGameId.svelte';
   import PlayerInfo from '../PlayerInfo.svelte';
+  import EndgameScreen from '../EndgameScreen.svelte';
 
   const { data } = $props();
   const store = createSnookerStore(data.initialState);
@@ -24,58 +25,24 @@
 </script>
 
 <div class="mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-  <div class="mb-6 flex justify-between">
-    <PlayerInfo playerId={0} isPlaying={game.currentPlayer === 0} score={game.scores[0]} />
-    <div class="text-center">
-      <div>Current Break</div>
-      <div class="text-2xl">{game.currentBreak}</div>
+  {#if !game.isOver}
+    <div class="mb-6 flex justify-between">
+      <PlayerInfo playerId={0} isPlaying={game.currentPlayer === 0} score={game.scores[0]} />
+      <div class="text-center">
+        <div>Current Break</div>
+        <div class="text-2xl">{game.currentBreak}</div>
+      </div>
+      <PlayerInfo playerId={1} isPlaying={game.currentPlayer === 1} score={game.scores[1]} />
     </div>
-    <PlayerInfo playerId={1} isPlaying={game.currentPlayer === 1} score={game.scores[1]} />
-  </div>
+  {/if}
 
   {#if game.isOver}
-    <div class="mb-6 text-center">
-      <div class="mb-4 text-3xl font-bold text-blue-600">Game Over!</div>
-      <div class="shadow-outer mb-4 rounded-lg bg-blue-50 p-4">
-        <div class="text-2xl font-bold text-green-700">
-          🏆 Player {game.winner! + 1} wins! 🏆
-        </div>
-      </div>
-
-      <div class="mb-4 grid grid-cols-2 gap-4">
-        {#each [0, 1] as player}
-          <div class="rounded-lg bg-gray-50 p-3 shadow-sm">
-            <h3 class="mb-2 border-b pb-1 text-lg font-semibold text-gray-800">
-              Player {player + 1}
-            </h3>
-            <div class="flex justify-between">
-              <span>Highest break:</span>
-              <span class="font-mono">{game.highestBreaks?.[player] ?? 'N/A'}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Longest chain:</span>
-              <span class="font-mono">{game.longestBreaks?.[player] ?? 'N/A'}</span>
-            </div>
-          </div>
-        {/each}
-      </div>
-
-      <div class="mt-4 flex gap-2">
-        <button
-          class="flex-1 transform rounded bg-gray-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-gray-600"
-          onclick={() => store.undoLastEvent()}
-          disabled={$store.events.length === 0}
-        >
-          Undo Last Action
-        </button>
-        <button
-          class="flex-1 transform rounded bg-green-500 px-4 py-3 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
-          onclick={() => store.resetGame()}
-        >
-          Start New Game
-        </button>
-      </div>
-    </div>
+    <EndgameScreen
+      {game}
+      events={$store.events}
+      onUndo={() => store.undoLastEvent()}
+      onNewGame={() => store.resetGame()}
+    />
   {:else}
     <div class="mb-4 text-center">
       <div>Reds Remaining: {game.redsRemaining}</div>

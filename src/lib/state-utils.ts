@@ -121,6 +121,24 @@ export const updateStoreWithEvent = (store: Store, newEvent: GameEvent): Store =
   return newStore;
 };
 
+export const calculateScoreBreakdown = (
+  events: GameEvent[],
+): { ownPots: [number, number]; opponentFouls: [number, number] } => {
+  const ownPots: [number, number] = [0, 0];
+  const opponentFouls: [number, number] = [0, 0];
+
+  for (const event of events) {
+    if (event.type === 'POT') {
+      ownPots[event.player] += event.points;
+    } else if (event.type === 'FOUL') {
+      const opponent = togglePlayer(event.player);
+      opponentFouls[opponent] += event.points;
+    }
+  }
+
+  return { ownPots, opponentFouls };
+};
+
 export const addEndGameStatsToState = (store: {
   currentState: GameState;
   events: GameEvent[];
